@@ -1,5 +1,6 @@
 package ru.yandex.practicum.kanban;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class TaskManager {
@@ -29,26 +30,26 @@ public class TaskManager {
     }
 
     // ТЗ 2-a: Получение списка всех задач.
-    public HashMap<Integer, Task> getTaskGroup() {
-        return taskGroup;
+    public ArrayList<Task> getTaskGroup() {
+        return new ArrayList<>(taskGroup.values()); // Исправлено! И действительно, нужно вернуть списки, а не мапы.
     }
 
-    public HashMap<Integer, SubTask> getSubTaskGroup() {
-        return subTaskGroup;
+    public ArrayList<SubTask> getSubTaskGroup() {
+        return new ArrayList<>(subTaskGroup.values());
     }
 
-    public HashMap<Integer, EpicTask> getEpicTaskGroup() {
-        return epicTaskGroup;
+    public ArrayList<EpicTask> getEpicTaskGroup() {
+        return new ArrayList<>(epicTaskGroup.values());
     }
 
     // ТЗ 3-а: Получение списка всех подзадач определённого эпика.
-    public HashMap<Integer, SubTask> getSubTaskGroup(int epicTaskId) {
-        HashMap<Integer, SubTask> resultGroup = new HashMap<>();
+    public ArrayList<SubTask> getSubTaskGroup(int epicTaskId) {
+        ArrayList<SubTask> resultGroup = new ArrayList<>();
 
         if (!subTaskGroup.isEmpty() || epicTaskGroup.containsKey(epicTaskId)) {
             for (SubTask subTask : subTaskGroup.values()) {
                 if (subTask.getEpicTaskId() == epicTaskId) {
-                    resultGroup.put(subTask.getId(), subTask);
+                    resultGroup.add(subTask);
                 }
             }
         }
@@ -56,7 +57,7 @@ public class TaskManager {
     }
 
     // ТЗ 2-d: Создание. Сам объект должен передаваться в качестве параметра.
-    public int add(Task task) {
+    public int addTask(Task task) { // Исправлено! Принцип использования перегрузки методов принял во внимание.
         int id = nextId++;
 
         task.setId(id);
@@ -64,7 +65,7 @@ public class TaskManager {
         return id;
     }
 
-    public int add(SubTask subTask) {
+    public int addSubTask(SubTask subTask) {
         int epicId = subTask.getEpicTaskId();
         if (getEpicTask(epicId) == null) {
             return 0;
@@ -79,7 +80,7 @@ public class TaskManager {
         return id;
     }
 
-    public int add(EpicTask epicTask) {
+    public int addEpicTask(EpicTask epicTask) {
         int id = nextId++;
 
         epicTask.setId(id);
@@ -88,7 +89,7 @@ public class TaskManager {
     }
 
     // ТЗ 2-е: Обновление. Новая версия объекта с верным идентификатором передаётся в виде параметра.
-    public boolean update(Task task) {
+    public boolean updateTask(Task task) {
         if (!taskGroup.containsKey(task.getId())) {
             return false;
         }
@@ -97,13 +98,13 @@ public class TaskManager {
         return true;
     }
 
-    public boolean update(SubTask subTask) {
+    public boolean updateSubTask(SubTask subTask) {
         int id = subTask.getId();
 
         if (!subTaskGroup.containsKey(id)) {
             return false;
         }
-
+        // Оставил неизменным согласно ответу в "Пачке".
         boolean isModifyStatus = subTask.getStatus() != getSubTask(id).getStatus();
 
         subTaskGroup.put(id, subTask);
@@ -113,12 +114,14 @@ public class TaskManager {
         return true;
     }
 
-    public boolean update(EpicTask epicTask) {
+    public boolean updateEpicTask(EpicTask epicTask) {
         if (!epicTaskGroup.containsKey(epicTask.getId())) {
             return false;
         }
 
-        epicTaskGroup.put(epicTask.getId(), epicTask);
+        EpicTask epicTaskOriginal = getEpicTask(epicTask.getId()); // Исправлено! Стало безопаснее.
+        epicTaskOriginal.setTitle(epicTask.getTitle());
+        epicTaskOriginal.setDescription(epicTask.getDescription());
         return true;
     }
 
@@ -130,10 +133,7 @@ public class TaskManager {
     public void clearSubTaskGroup() {
         subTaskGroup.clear();
 
-        if (epicTaskGroup.isEmpty()) {
-            return;
-        }
-
+        // Исправлено! Действительно проверка на пустоту лишняя
         for (EpicTask epicTask : epicTaskGroup.values()) {
             epicTask.getSubTaskIds().clear();
             epicTask.setStatus(StatusTask.NEW);

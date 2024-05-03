@@ -5,6 +5,11 @@ import java.util.ArrayList;
 public class EpicTask extends Task {
     protected ArrayList<Integer> subTaskIds;
 
+    public EpicTask(String title, String description) { // Добавлено!
+        super(title, description);
+        this.subTaskIds = new ArrayList<>();
+    }
+
     public EpicTask(String title, String description, int id, StatusTask status, ArrayList<Integer> subTaskIds) {
         super(title, description, id, status);
         this.subTaskIds = subTaskIds;
@@ -26,12 +31,8 @@ public class EpicTask extends Task {
     }
 
     public boolean removeSubTaskId(int id) {
-        int index = subTaskIds.indexOf(id);
-        if (index < 0) {
-            return false;
-        }
-        subTaskIds.remove(index);
-        return true;
+        return subTaskIds.remove((Integer) id); // Исправлено! Перемудрил :)
+        // А ведь помню, что идея предлагала remove по объекту, и зачем я прицепился к примитиву...
     }
 
     @Override

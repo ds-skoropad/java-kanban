@@ -1,10 +1,19 @@
 package ru.yandex.practicum.kanban;
 
+import java.util.Objects;
+
 public class Task {
     protected String title;
     protected String description;
     protected int id;
     protected StatusTask status;
+
+    public Task(String title, String description) { // Добавлено!
+        this.title = title;
+        this.description = description;
+        this.id = 0;
+        this.status = StatusTask.NEW;
+    }
 
     public Task(String title, String description, int id, StatusTask status) {
         this.title = title;
@@ -55,7 +64,8 @@ public class Task {
 
     @Override
     public int hashCode() {
-        return id;
+        return Objects.hash(id); // Исправлено! Да, я использую автогенерацию.
+        // Я предположил, что можно вернуть просто ID т.к. он уникален и не требуется лишняя нагрузка.
     }
 
     @Override

@@ -3,6 +3,11 @@ package ru.yandex.practicum.kanban;
 public class SubTask extends Task{
     protected int epicTaskId;
 
+    public SubTask(String title, String description) { // Добавлено!
+        super(title, description);
+        this.epicTaskId = 0;
+    }
+
     public SubTask(String title, String description, int id, StatusTask status, int epicTaskId) {
         super(title, description, id, status);
         this.epicTaskId = epicTaskId;
