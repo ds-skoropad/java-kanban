@@ -1,4 +1,9 @@
-package ru.yandex.practicum.kanban;
+package ru.yandex.practicum.kanban.manager;
+
+import ru.yandex.practicum.kanban.task.EpicTask;
+import ru.yandex.practicum.kanban.task.StatusTask;
+import ru.yandex.practicum.kanban.task.SubTask;
+import ru.yandex.practicum.kanban.task.Task;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,13 +48,13 @@ public class TaskManager {
     }
 
     // ТЗ 3-а: Получение списка всех подзадач определённого эпика.
-    public ArrayList<SubTask> getSubTaskGroup(int epicTaskId) {
+    public ArrayList<SubTask> getSubTaskGroupFromEpic(int epicTaskId) { // Исправлено! Благодарю, отличное замечание.
         ArrayList<SubTask> resultGroup = new ArrayList<>();
 
-        if (!subTaskGroup.isEmpty() || epicTaskGroup.containsKey(epicTaskId)) {
-            for (SubTask subTask : subTaskGroup.values()) {
-                if (subTask.getEpicTaskId() == epicTaskId) {
-                    resultGroup.add(subTask);
+        if (!subTaskGroup.isEmpty() && epicTaskGroup.containsKey(epicTaskId)) { // Также заменил || на &&
+            for (int subTaskId : getEpicTask(epicTaskId).getSubTaskIds()) {
+                if (subTaskGroup.containsKey(subTaskId)) {
+                    resultGroup.add(getSubTask(subTaskId));
                 }
             }
         }

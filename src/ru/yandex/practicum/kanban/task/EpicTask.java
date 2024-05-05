@@ -1,4 +1,4 @@
-package ru.yandex.practicum.kanban;
+package ru.yandex.practicum.kanban.task;
 
 import java.util.ArrayList;
 
@@ -30,9 +30,8 @@ public class EpicTask extends Task {
         return subTaskIds.add(id);
     }
 
-    public boolean removeSubTaskId(int id) {
-        return subTaskIds.remove((Integer) id); // Исправлено! Перемудрил :)
-        // А ведь помню, что идея предлагала remove по объекту, и зачем я прицепился к примитиву...
+    public boolean removeSubTaskId(Integer id) {
+        return subTaskIds.remove(id); // Исправлено!
     }
 
     @Override

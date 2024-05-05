@@ -1,10 +1,13 @@
 /*
  * Приветствую, Сергей.
- * Как и всегда, буду рад любому комментарию или замечанию.
+ * Произвел распределение по пакетам. Признаюсь, просто забыл это сделать.
  */
 
-
-import ru.yandex.practicum.kanban.*;
+import ru.yandex.practicum.kanban.manager.TaskManager;
+import ru.yandex.practicum.kanban.task.EpicTask;
+import ru.yandex.practicum.kanban.task.StatusTask;
+import ru.yandex.practicum.kanban.task.SubTask;
+import ru.yandex.practicum.kanban.task.Task;
 
 import java.util.ArrayList;
 
@@ -21,7 +24,7 @@ public class Main {
 
         for (int i = 1; i < 3; i++) {
             int epicId = taskManager.addEpicTask(new EpicTask("Сверхзадача.." + i, "Описание сверхзадачи.." + i,
-                    0, StatusTask.NEW, new ArrayList<Integer>()));
+                    0, StatusTask.NEW, new ArrayList<>()));
             for (int j = 1; j < i + 1; j++) {
                 taskManager.addSubTask(new SubTask("Подзадача...." + j, "Описание подзадачи...." + j,
                         0, StatusTask.NEW, epicId));
@@ -78,7 +81,7 @@ public class Main {
         }
         for (EpicTask epicTask : taskManager.getEpicTaskGroup()) {
             System.out.println(epicTask);
-            for (SubTask subTask : taskManager.getSubTaskGroup(epicTask.getId())) {
+            for (SubTask subTask : taskManager.getSubTaskGroupFromEpic(epicTask.getId())) {
                 System.out.println(" " + subTask);
             }
         }
