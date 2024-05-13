@@ -1,214 +1,54 @@
 package ru.yandex.practicum.kanban.manager;
 
 import ru.yandex.practicum.kanban.task.EpicTask;
-import ru.yandex.practicum.kanban.task.StatusTask;
 import ru.yandex.practicum.kanban.task.SubTask;
 import ru.yandex.practicum.kanban.task.Task;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 
-public class TaskManager {
-    private final HashMap<Integer, Task> taskGroup;
-    private final HashMap<Integer, SubTask> subTaskGroup;
-    private final HashMap<Integer, EpicTask> epicTaskGroup;
-    private int nextId;
-
-    public TaskManager() {
-        this.taskGroup = new HashMap<>();
-        this.subTaskGroup = new HashMap<>();
-        this.epicTaskGroup = new HashMap<>();
-        this.nextId = 1;
-    }
-
+public interface TaskManager {
     // ТЗ 2-с: Получение по идентификатору.
-    public Task getTask(int id) {
-        return taskGroup.get(id);
-    }
+    Task getTask(int id);
 
-    public SubTask getSubTask(int id) {
-        return subTaskGroup.get(id);
-    }
+    SubTask getSubTask(int id);
 
-    public EpicTask getEpicTask(int id) {
-        return epicTaskGroup.get(id);
-    }
+    EpicTask getEpicTask(int id);
 
     // ТЗ 2-a: Получение списка всех задач.
-    public ArrayList<Task> getTaskGroup() {
-        return new ArrayList<>(taskGroup.values()); // Исправлено! И действительно, нужно вернуть списки, а не мапы.
-    }
+    List<Task> getTaskGroup();
 
-    public ArrayList<SubTask> getSubTaskGroup() {
-        return new ArrayList<>(subTaskGroup.values());
-    }
+    List<SubTask> getSubTaskGroup();
 
-    public ArrayList<EpicTask> getEpicTaskGroup() {
-        return new ArrayList<>(epicTaskGroup.values());
-    }
+    List<EpicTask> getEpicTaskGroup();
 
     // ТЗ 3-а: Получение списка всех подзадач определённого эпика.
-    public ArrayList<SubTask> getSubTaskGroupFromEpic(int epicTaskId) { // Исправлено! Благодарю, отличное замечание.
-        ArrayList<SubTask> resultGroup = new ArrayList<>();
-
-        if (!subTaskGroup.isEmpty() && epicTaskGroup.containsKey(epicTaskId)) { // Также заменил || на &&
-            for (int subTaskId : getEpicTask(epicTaskId).getSubTaskIds()) {
-                if (subTaskGroup.containsKey(subTaskId)) {
-                    resultGroup.add(getSubTask(subTaskId));
-                }
-            }
-        }
-        return resultGroup; // При неверных вводных пустая коллекция. При воврате null(отказался) возможны исключения.
-    }
+    List<SubTask> getSubTaskGroupFromEpic(int epicTaskId);
 
     // ТЗ 2-d: Создание. Сам объект должен передаваться в качестве параметра.
-    public int addTask(Task task) { // Исправлено! Принцип использования перегрузки методов принял во внимание.
-        int id = nextId++;
+    int addTask(Task task);
 
-        task.setId(id);
-        taskGroup.put(id, task);
-        return id;
-    }
+    int addSubTask(SubTask subTask);
 
-    public int addSubTask(SubTask subTask) {
-        int epicId = subTask.getEpicTaskId();
-        if (getEpicTask(epicId) == null) {
-            return 0;
-        }
-
-        int id = nextId++;
-
-        subTask.setId(id);
-        subTaskGroup.put(id, subTask);
-        epicTaskGroup.get(epicId).addSubTaskId(id);
-        updateStatusEpicTask(epicId);
-        return id;
-    }
-
-    public int addEpicTask(EpicTask epicTask) {
-        int id = nextId++;
-
-        epicTask.setId(id);
-        epicTaskGroup.put(id, epicTask);
-        return id;
-    }
+    int addEpicTask(EpicTask epicTask);
 
     // ТЗ 2-е: Обновление. Новая версия объекта с верным идентификатором передаётся в виде параметра.
-    public boolean updateTask(Task task) {
-        if (!taskGroup.containsKey(task.getId())) {
-            return false;
-        }
+    boolean updateTask(Task task);
 
-        taskGroup.put(task.getId(), task);
-        return true;
-    }
+    boolean updateSubTask(SubTask subTask);
 
-    public boolean updateSubTask(SubTask subTask) {
-        int id = subTask.getId();
-
-        if (!subTaskGroup.containsKey(id)) {
-            return false;
-        }
-        // Оставил неизменным согласно ответу в "Пачке".
-        boolean isModifyStatus = subTask.getStatus() != getSubTask(id).getStatus();
-
-        subTaskGroup.put(id, subTask);
-        if (isModifyStatus) {
-            updateStatusEpicTask(subTask.getEpicTaskId());
-        }
-        return true;
-    }
-
-    public boolean updateEpicTask(EpicTask epicTask) {
-        if (!epicTaskGroup.containsKey(epicTask.getId())) {
-            return false;
-        }
-
-        EpicTask epicTaskOriginal = getEpicTask(epicTask.getId()); // Исправлено! Стало безопаснее.
-        epicTaskOriginal.setTitle(epicTask.getTitle());
-        epicTaskOriginal.setDescription(epicTask.getDescription());
-        return true;
-    }
+    boolean updateEpicTask(EpicTask epicTask);
 
     // ТЗ 2-b: Удаление всех задач.
-    public void clearTaskGroup() {
-        taskGroup.clear();
-    }
+    void clearTaskGroup();
 
-    public void clearSubTaskGroup() {
-        subTaskGroup.clear();
+    void clearSubTaskGroup();
 
-        // Исправлено! Действительно проверка на пустоту лишняя
-        for (EpicTask epicTask : epicTaskGroup.values()) {
-            epicTask.getSubTaskIds().clear();
-            epicTask.setStatus(StatusTask.NEW);
-        }
-    }
-
-    public void clearEpicTaskGroup() {
-        subTaskGroup.clear();
-        epicTaskGroup.clear();
-    }
+    void clearEpicTaskGroup();
 
     // ТЗ 2-f: Удаление по идентификатору.
-    public boolean removeTask(int id) {
-        return taskGroup.remove(id) != null;
-    }
+    boolean removeTask(int id);
 
-    public boolean removeSubTask(int id) {
-        if (!subTaskGroup.containsKey(id)) {
-            return false;
-        }
+    boolean removeSubTask(int id);
 
-        int epicId = getSubTask(id).getEpicTaskId();
-        getEpicTask(epicId).removeSubTaskId(id);
-        subTaskGroup.remove(id);
-        updateStatusEpicTask(epicId);
-        return true;
-    }
-
-    public boolean removeEpicTask(int id) {
-        if (!epicTaskGroup.containsKey(id)) {
-            return false;
-        }
-
-        for (Integer subTaskId : getEpicTask(id).getSubTaskIds()) {
-            subTaskGroup.remove(subTaskId);
-        }
-        epicTaskGroup.remove(id);
-        return true;
-    }
-
-    private void updateStatusEpicTask(int id) {
-        EpicTask epicTask = getEpicTask(id);
-
-        if (epicTask.getSubTaskIds().isEmpty()) {
-            epicTask.setStatus(StatusTask.NEW);
-            return;
-        }
-
-        boolean isAllNew = true;
-        boolean isAllDone = true;
-
-        for (Integer subTaskId : epicTask.getSubTaskIds()) {
-            switch (getSubTask(subTaskId).getStatus()) {
-                case NEW -> isAllDone = false;
-                case DONE -> isAllNew = false;
-                default -> {
-                    isAllDone = false;
-                    isAllNew = false;
-                }
-            }
-            if (!isAllDone && !isAllNew) {
-                break;
-            }
-        }
-        if (isAllNew) {
-            epicTask.setStatus(StatusTask.NEW);
-        } else if (isAllDone) {
-            epicTask.setStatus(StatusTask.DONE);
-        } else {
-            epicTask.setStatus(StatusTask.IN_PROGRESS);
-        }
-    }
+    boolean removeEpicTask(int id);
 }

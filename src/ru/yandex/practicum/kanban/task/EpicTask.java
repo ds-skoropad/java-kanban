@@ -1,25 +1,26 @@
 package ru.yandex.practicum.kanban.task;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class EpicTask extends Task {
-    protected ArrayList<Integer> subTaskIds;
+    protected List<Integer> subTaskIds;
 
-    public EpicTask(String title, String description) { // Добавлено!
+    public EpicTask(String title, String description) {
         super(title, description);
         this.subTaskIds = new ArrayList<>();
     }
 
-    public EpicTask(String title, String description, int id, StatusTask status, ArrayList<Integer> subTaskIds) {
+    public EpicTask(String title, String description, int id, StatusTask status, List<Integer> subTaskIds) {
         super(title, description, id, status);
         this.subTaskIds = subTaskIds;
     }
 
-    public ArrayList<Integer> getSubTaskIds() {
+    public List<Integer> getSubTaskIds() {
         return subTaskIds;
     }
 
-    public void setSubTaskIds(ArrayList<Integer> subTaskIds) {
+    public void setSubTaskIds(List<Integer> subTaskIds) {
         this.subTaskIds = subTaskIds;
     }
 
@@ -31,7 +32,7 @@ public class EpicTask extends Task {
     }
 
     public boolean removeSubTaskId(Integer id) {
-        return subTaskIds.remove(id); // Исправлено!
+        return subTaskIds.remove(id); //
     }
 
     @Override

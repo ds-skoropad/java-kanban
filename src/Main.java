@@ -1,8 +1,9 @@
 /*
- * Приветствую, Сергей.
- * Произвел распределение по пакетам. Признаюсь, просто забыл это сделать.
+ * Приветствую, Сергей!
+ * Всегда рад любым замечаниям.
  */
 
+import ru.yandex.practicum.kanban.manager.Managers;
 import ru.yandex.practicum.kanban.manager.TaskManager;
 import ru.yandex.practicum.kanban.task.EpicTask;
 import ru.yandex.practicum.kanban.task.StatusTask;
@@ -12,9 +13,13 @@ import ru.yandex.practicum.kanban.task.Task;
 import java.util.ArrayList;
 
 public class Main {
-    public static TaskManager taskManager = new TaskManager();
+    public static Managers managers;
+    public static TaskManager taskManager;
 
     public static void main(String[] args) {
+
+        managers = new Managers();
+        taskManager = Managers.getDefault();
 
         System.out.println("TASK MANAGER [Version 0.1]\n");
 
@@ -58,10 +63,10 @@ public class Main {
 
         System.out.println("MODIFY: updateSubTask{id=4}, result=" +
                 taskManager.updateSubTask(new SubTask("Подзадача....1",
-                "Описание подзадачи....1", 4, StatusTask.NEW, 3)));
+                        "Описание подзадачи....1", 4, StatusTask.NEW, 3)));
         System.out.println("MODIFY: updateSubTask{id=7}, result=" +
                 taskManager.updateSubTask(new SubTask("Подзадача....2",
-                "Описание подзадачи....2", 7, StatusTask.DONE, 5)));
+                        "Описание подзадачи....2", 7, StatusTask.DONE, 5)));
         printAllTask();
 
         System.out.println("MODIFY: removeSubTask{id=6}, result=" + taskManager.removeSubTask(6));

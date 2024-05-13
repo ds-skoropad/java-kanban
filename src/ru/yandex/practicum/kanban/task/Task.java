@@ -8,7 +8,7 @@ public class Task {
     protected int id;
     protected StatusTask status;
 
-    public Task(String title, String description) { // Добавлено!
+    public Task(String title, String description) {
         this.title = title;
         this.description = description;
         this.id = 0;
@@ -64,8 +64,7 @@ public class Task {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id); // Исправлено! Да, я использую автогенерацию.
-        // Я предположил, что можно вернуть просто ID т.к. он уникален и не требуется лишняя нагрузка.
+        return Objects.hash(id);
     }
 
     @Override
