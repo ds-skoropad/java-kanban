@@ -36,6 +36,11 @@ public class EpicTask extends Task {
     }
 
     @Override
+    public TypeTask getType() {
+        return TypeTask.EPIC_TASK;
+    }
+
+    @Override
     public String toString() {
         return "EpicTask{" +
                 "title='" + title + '\'' +

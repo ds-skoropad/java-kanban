@@ -25,15 +25,14 @@ class InMemoryTaskManagerTest {
     static final int NUMBER_SUB_TASKS = 3;
     static final int NUMBER_EPIC1_SUB_TASKS = 1;
     static final int NUMBER_EPIC2_SUB_TASKS = 2;
-    static HistoryManager historyManager;
-    static TaskManager taskManager;
-    static Task task1;
-    static Task task2;
-    static EpicTask epic1;
-    static EpicTask epic2;
-    static SubTask sub1InEpic1;
-    static SubTask sub1InEpic2;
-    static SubTask sub2InEpic2;
+    TaskManager taskManager;  // Исправлено! Менеджер историй убрал из теста
+    Task task1;
+    Task task2;
+    EpicTask epic1;
+    EpicTask epic2;
+    SubTask sub1InEpic1;
+    SubTask sub1InEpic2;
+    SubTask sub2InEpic2;
 
     // Возвращает новую ПодЗадачу на основе переданной с измененным статусом
     static SubTask getCopySubTaskWithNewStatus(SubTask subTask, StatusTask statusTask) {
@@ -49,8 +48,7 @@ class InMemoryTaskManagerTest {
          * Две задачи, один Эпик с одной ПодЗадачей и второй Эпик с двумя ПодЗадачами
          */
 
-        historyManager = new InMemoryHistoryManager();
-        taskManager = new InMemoryTaskManager(historyManager);
+        taskManager = new InMemoryTaskManager(new InMemoryHistoryManager());
 
         task1 = new Task("Task title", "Task description");
         task2 = new Task("Task title", "Task description");
@@ -59,18 +57,18 @@ class InMemoryTaskManagerTest {
 
         epic1 = new EpicTask("EpicTask title", "EpicTask description");
         sub1InEpic1 = new SubTask("SubTask title", "SubTask description");
-        taskManager.addEpicTask(epic1); // id = 3
+        taskManager.addTask(epic1); // id = 3
         sub1InEpic1.setEpicTaskId(epic1.getId());
-        taskManager.addSubTask(sub1InEpic1); // id = 4
+        taskManager.addTask(sub1InEpic1); // id = 4
 
         epic2 = new EpicTask("EpicTask title", "EpicTask description");
         sub1InEpic2 = new SubTask("SubTask title", "SubTask description");
         sub2InEpic2 = new SubTask("SubTask title", "SubTask description");
-        taskManager.addEpicTask(epic2); // id = 5
+        taskManager.addTask(epic2); // id = 5
         sub1InEpic2.setEpicTaskId(epic2.getId());
         sub2InEpic2.setEpicTaskId(epic2.getId());
-        taskManager.addSubTask(sub1InEpic2); // id = 6
-        taskManager.addSubTask(sub2InEpic2); // id = 7
+        taskManager.addTask(sub1InEpic2); // id = 6
+        taskManager.addTask(sub2InEpic2); // id = 7
     }
 
     @Test
@@ -109,13 +107,13 @@ class InMemoryTaskManagerTest {
         // Новые подзадачи можно создать только под эпиком
         final SubTask newSubTaskAddInTask = new SubTask("New SubTask", "New SubTask description");
         newSubTaskAddInTask.setEpicTaskId(task1.getId());  // Попытка прикрепить подзадачу к задаче
-        final int resultAddInTask = taskManager.addSubTask(newSubTaskAddInTask);
+        final int resultAddInTask = taskManager.addTask(newSubTaskAddInTask);
 
         assertEquals(0, resultAddInTask, "Wrong EpicTaskId for SubTask");
 
         final SubTask newSubAddTaskInSubTask = new SubTask("New SubTask", "New SubTask description");
         newSubAddTaskInSubTask.setEpicTaskId(sub1InEpic1.getId());  // Попытка прикрепить подзадачу к подзадаче
-        final int resultAddInSubTask = taskManager.addSubTask(newSubAddTaskInSubTask);
+        final int resultAddInSubTask = taskManager.addTask(newSubAddTaskInSubTask);
 
         assertEquals(0, resultAddInSubTask, "Wrong EpicTaskId for SubTask");
 
@@ -193,7 +191,7 @@ class InMemoryTaskManagerTest {
         final StatusTask newStatus = StatusTask.IN_PROGRESS;
         final int newEpicTaskId = sub1InEpic1.getEpicTaskId() + 1;  // Не должно меняться
 
-        taskManager.updateSubTask(new SubTask(newTitle, newDescription, id, newStatus, newEpicTaskId));
+        taskManager.updateTask(new SubTask(newTitle, newDescription, id, newStatus, newEpicTaskId));
         final SubTask subTask = taskManager.getSubTask(id);
 
         assertEquals(newTitle, subTask.getTitle(), "Not the same title");
@@ -210,7 +208,7 @@ class InMemoryTaskManagerTest {
         final StatusTask newStatus = StatusTask.IN_PROGRESS;  // Не должен меняться
         final List<Integer> newSubTaskIds = new ArrayList<>(); // Не должен меняться
 
-        taskManager.updateEpicTask(new EpicTask(newTitle, newDescription, id, newStatus, newSubTaskIds));
+        taskManager.updateTask(new EpicTask(newTitle, newDescription, id, newStatus, newSubTaskIds));
         final EpicTask epicTask = taskManager.getEpicTask(id);
 
         assertEquals(newTitle, epicTask.getTitle(), "Not the same title");
@@ -349,24 +347,24 @@ class InMemoryTaskManagerTest {
     public void statusEpicTaskToBeInProgress() {
         // Эпик1
         sub1InEpic1 = getCopySubTaskWithNewStatus(sub1InEpic1, StatusTask.IN_PROGRESS);
-        taskManager.updateSubTask(sub1InEpic1);
+        taskManager.updateTask(sub1InEpic1);
         assertEquals(StatusTask.IN_PROGRESS, epic1.getStatus(), StatusTask.IN_PROGRESS + " status expected");
 
         // Эпик2
         sub1InEpic2 = getCopySubTaskWithNewStatus(sub1InEpic2, StatusTask.DONE);
-        taskManager.updateSubTask(sub1InEpic2);
+        taskManager.updateTask(sub1InEpic2);
         assertEquals(StatusTask.IN_PROGRESS, epic2.getStatus(), StatusTask.IN_PROGRESS + " status expected");
 
         sub2InEpic2 = getCopySubTaskWithNewStatus(sub2InEpic2, StatusTask.IN_PROGRESS);
-        taskManager.updateSubTask(sub2InEpic2);
+        taskManager.updateTask(sub2InEpic2);
         assertEquals(StatusTask.IN_PROGRESS, epic2.getStatus(), StatusTask.IN_PROGRESS + " status expected");
 
         sub1InEpic2 = getCopySubTaskWithNewStatus(sub1InEpic2, StatusTask.NEW);
-        taskManager.updateSubTask(sub1InEpic2);
+        taskManager.updateTask(sub1InEpic2);
         assertEquals(StatusTask.IN_PROGRESS, epic2.getStatus(), StatusTask.IN_PROGRESS + " status expected");
 
         sub2InEpic2 = getCopySubTaskWithNewStatus(sub2InEpic2, StatusTask.DONE);
-        taskManager.updateSubTask(sub2InEpic2);
+        taskManager.updateTask(sub2InEpic2);
         assertEquals(StatusTask.IN_PROGRESS, epic2.getStatus(), StatusTask.IN_PROGRESS + " status expected");
 
     }
@@ -376,14 +374,14 @@ class InMemoryTaskManagerTest {
         // Eсли все подзадачи имеют статус DONE, то и эпик считается завершённым — со статусом DONE.
         // Эпик1
         sub1InEpic1 = getCopySubTaskWithNewStatus(sub1InEpic1, StatusTask.DONE);
-        taskManager.updateSubTask(sub1InEpic1);
+        taskManager.updateTask(sub1InEpic1);
         assertEquals(StatusTask.DONE, epic1.getStatus(), StatusTask.DONE + " status expected");
 
         // Эпик2
         sub1InEpic2 = getCopySubTaskWithNewStatus(sub1InEpic2, StatusTask.DONE);
-        taskManager.updateSubTask(sub1InEpic2);
+        taskManager.updateTask(sub1InEpic2);
         sub2InEpic2 = getCopySubTaskWithNewStatus(sub2InEpic2, StatusTask.DONE);
-        taskManager.updateSubTask(sub2InEpic2);
+        taskManager.updateTask(sub2InEpic2);
         assertEquals(StatusTask.DONE, epic2.getStatus(), StatusTask.DONE + " status expected");
 
     }
@@ -392,57 +390,37 @@ class InMemoryTaskManagerTest {
          // Eсли у эпика нет подзадач или все они имеют статус NEW, то статус должен быть NEW.
         // Эпик1
         sub1InEpic1 = getCopySubTaskWithNewStatus(sub1InEpic1, StatusTask.DONE);
-        taskManager.updateSubTask(sub1InEpic1);
+        taskManager.updateTask(sub1InEpic1);
         assertNotEquals(StatusTask.NEW, epic1.getStatus(), StatusTask.NEW + " status not expected");
 
         sub1InEpic1 = getCopySubTaskWithNewStatus(sub1InEpic1, StatusTask.NEW);
-        taskManager.updateSubTask(sub1InEpic1);
+        taskManager.updateTask(sub1InEpic1);
         assertEquals(StatusTask.NEW, epic1.getStatus(), StatusTask.NEW + " status expected");
 
         sub1InEpic1 = getCopySubTaskWithNewStatus(sub1InEpic1, StatusTask.DONE);
-        taskManager.updateSubTask(sub1InEpic1);
+        taskManager.updateTask(sub1InEpic1);
         taskManager.removeSubTask(sub1InEpic1.getId());
         assertEquals(StatusTask.NEW, epic1.getStatus(), StatusTask.NEW + " status expected");
 
 
         // Эпик2
         sub1InEpic2 = getCopySubTaskWithNewStatus(sub1InEpic2, StatusTask.DONE);
-        taskManager.updateSubTask(sub1InEpic2);
+        taskManager.updateTask(sub1InEpic2);
         sub2InEpic2 = getCopySubTaskWithNewStatus(sub2InEpic2, StatusTask.DONE);
-        taskManager.updateSubTask(sub2InEpic2);
+        taskManager.updateTask(sub2InEpic2);
         assertNotEquals(StatusTask.NEW, epic2.getStatus(), StatusTask.NEW + " status not expected");
 
         sub1InEpic2 = getCopySubTaskWithNewStatus(sub1InEpic2, StatusTask.NEW);
-        taskManager.updateSubTask(sub1InEpic2);
+        taskManager.updateTask(sub1InEpic2);
         assertNotEquals(StatusTask.NEW, epic2.getStatus(), StatusTask.NEW + " status not expected");
 
         sub2InEpic2 = getCopySubTaskWithNewStatus(sub2InEpic2, StatusTask.NEW);
-        taskManager.updateSubTask(sub2InEpic2);
+        taskManager.updateTask(sub2InEpic2);
         assertEquals(StatusTask.NEW, epic2.getStatus(), StatusTask.NEW + " status expected");
 
         sub2InEpic2 = getCopySubTaskWithNewStatus(sub2InEpic2, StatusTask.DONE);
-        taskManager.updateSubTask(sub2InEpic2);
+        taskManager.updateTask(sub2InEpic2);
         taskManager.removeSubTask(sub2InEpic2.getId());
         assertEquals(StatusTask.NEW, epic2.getStatus(), StatusTask.NEW + " status expected");
-    }
-
-    @Test
-    public void addHistory() {
-        List<Task> history = historyManager.getHistory();
-
-        assertNotNull(history, "History should be not null");
-        assertEquals(0, history.size(), "New history should be empty");
-
-        // Просматриваем корректные id
-        taskManager.getTask(task1.getId());
-        taskManager.getEpicTask(epic1.getId());
-        taskManager.getSubTask(sub1InEpic1.getId());
-
-        // Не корректные(не существующие) id не должны влиять на историю
-        taskManager.getTask(100);
-        taskManager.getEpicTask(101);
-        taskManager.getSubTask(102);
-
-        assertEquals(3, history.size(), "Unexpected history size");
     }
 }

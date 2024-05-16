@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface TaskManager {
     // ТЗ 2-с: Получение по идентификатору.
+    
     Task getTask(int id);
 
     SubTask getSubTask(int id);
@@ -27,16 +28,8 @@ public interface TaskManager {
     // ТЗ 2-d: Создание. Сам объект должен передаваться в качестве параметра.
     int addTask(Task task);
 
-    int addSubTask(SubTask subTask);
-
-    int addEpicTask(EpicTask epicTask);
-
     // ТЗ 2-е: Обновление. Новая версия объекта с верным идентификатором передаётся в виде параметра.
     boolean updateTask(Task task);
-
-    boolean updateSubTask(SubTask subTask);
-
-    boolean updateEpicTask(EpicTask epicTask);
 
     // ТЗ 2-b: Удаление всех задач.
     void clearTaskGroup();
@@ -51,4 +44,6 @@ public interface TaskManager {
     boolean removeSubTask(int id);
 
     boolean removeEpicTask(int id);
+
+    void setHistoryManager(HistoryManager historyManager);
 }

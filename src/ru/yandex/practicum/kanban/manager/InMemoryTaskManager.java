@@ -1,9 +1,6 @@
 package ru.yandex.practicum.kanban.manager;
 
-import ru.yandex.practicum.kanban.task.EpicTask;
-import ru.yandex.practicum.kanban.task.StatusTask;
-import ru.yandex.practicum.kanban.task.SubTask;
-import ru.yandex.practicum.kanban.task.Task;
+import ru.yandex.practicum.kanban.task.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,9 +11,15 @@ public class InMemoryTaskManager implements TaskManager {
     private final Map<Integer, Task> taskGroup;
     private final Map<Integer, SubTask> subTaskGroup;
     private final Map<Integer, EpicTask> epicTaskGroup;
-    private final HistoryManager historyManager;
+    private HistoryManager historyManager;
     private int nextId;
 
+    public InMemoryTaskManager() {
+        this.taskGroup = new HashMap<>();
+        this.subTaskGroup = new HashMap<>();
+        this.epicTaskGroup = new HashMap<>();
+        this.nextId = 1;
+    }
     public InMemoryTaskManager(HistoryManager historyManager) {
         this.taskGroup = new HashMap<>();
         this.subTaskGroup = new HashMap<>();
@@ -25,23 +28,39 @@ public class InMemoryTaskManager implements TaskManager {
         this.nextId = 1;
     }
 
+    public void setHistoryManager(HistoryManager historyManager) {
+        this.historyManager = historyManager;
+    }
+
     // ТЗ 2-с: Получение по идентификатору.
     @Override
     public Task getTask(int id) {
-        historyManager.add(taskGroup.get(id));  // Добавления не будет если taskGroup.get(id) == null
-        return taskGroup.get(id);
+        Task task = taskGroup.get(id); // Исправлено! Согласен, создал лишнюю нагрузку на ЦП.
+
+        if (historyManager != null) {
+            historyManager.add(task);
+        }
+        return task;
     }
 
     @Override
     public SubTask getSubTask(int id) {
-        historyManager.add(subTaskGroup.get(id));
-        return subTaskGroup.get(id);
+        SubTask subTask = subTaskGroup.get(id);
+
+        if (historyManager != null) {
+            historyManager.add(subTask);
+        }
+        return subTask;
     }
 
     @Override
     public EpicTask getEpicTask(int id) {
-        historyManager.add(epicTaskGroup.get(id));
-        return epicTaskGroup.get(id);
+        EpicTask epicTask = epicTaskGroup.get(id);
+
+        if (historyManager != null) {
+            historyManager.add(epicTask);
+        }
+        return epicTask;
     }
 
     // ТЗ 2-a: Получение списка всех задач.
@@ -78,80 +97,73 @@ public class InMemoryTaskManager implements TaskManager {
 
     // ТЗ 2-d: Создание. Сам объект должен передаваться в качестве параметра.
     @Override
-    public int addTask(Task task) {
-        if (task instanceof SubTask || task instanceof EpicTask) {
-            // Режем возможность добавить наследников
-            return 0;
+    public int addTask(Task task) {  // Исправлено!
+        if (task == null) return 0;
+        int id;
+
+        switch (task.getType()) {
+            case SUB_TASK -> {
+                SubTask subTask = (SubTask) task;
+                int epicId = subTask.getEpicTaskId();
+
+                if (epicTaskGroup.get(epicId) == null) {
+                    return 0;
+                }
+
+                id = nextId++;
+                subTask.setId(id);
+                subTaskGroup.put(id, subTask);
+                epicTaskGroup.get(epicId).addSubTaskId(id);
+                updateStatusEpicTask(epicId);
+            }
+            case EPIC_TASK -> {
+                id = nextId++;
+                EpicTask epicTask = (EpicTask) task;
+                epicTask.setId(id);
+                epicTaskGroup.put(id, epicTask);
+            }
+            default -> { // TASK
+                id = nextId++;
+                task.setId(id);
+                taskGroup.put(id, task);
+            }
         }
-        int id = nextId++;
-
-        task.setId(id);
-        taskGroup.put(id, task);
-        return id;
-    }
-
-    @Override
-    public int addSubTask(SubTask subTask) {
-        int epicId = subTask.getEpicTaskId();
-        if (epicTaskGroup.get(epicId) == null) {
-            return 0;
-        }
-
-        int id = nextId++;
-
-        subTask.setId(id);
-        subTaskGroup.put(id, subTask);
-        epicTaskGroup.get(epicId).addSubTaskId(id);
-        updateStatusEpicTask(epicId);
-        return id;
-    }
-
-    @Override
-    public int addEpicTask(EpicTask epicTask) {
-        int id = nextId++;
-
-        epicTask.setId(id);
-        epicTaskGroup.put(id, epicTask);
         return id;
     }
 
     // ТЗ 2-е: Обновление. Новая версия объекта с верным идентификатором передаётся в виде параметра.
     @Override
     public boolean updateTask(Task task) {
-        if (!taskGroup.containsKey(task.getId())) {
-            return false;
+        if (task == null) return false;
+        int id = task.getId();
+
+        switch (task.getType()) {
+            case SUB_TASK -> {
+                if (!subTaskGroup.containsKey(id)) return false;
+
+                SubTask subTask = (SubTask) task;
+                SubTask subTaskOriginal = subTaskGroup.get(id);
+                subTaskOriginal.setTitle(subTask.getTitle());
+                subTaskOriginal.setDescription(subTask.getDescription());
+
+                if (subTaskOriginal.getStatus() != subTask.getStatus()) { // Если статус изменился
+                    subTaskOriginal.setStatus(subTask.getStatus());
+                    updateStatusEpicTask(subTaskOriginal.getEpicTaskId());
+                }
+            }
+            case EPIC_TASK -> {
+                if (!epicTaskGroup.containsKey(id)) return false;
+
+                EpicTask epicTask = (EpicTask) task;
+                EpicTask epicTaskOriginal = epicTaskGroup.get(id);
+                epicTaskOriginal.setTitle(epicTask.getTitle());
+                epicTaskOriginal.setDescription(epicTask.getDescription());
+            }
+            default -> { // TASK
+                if (!taskGroup.containsKey(id)) return false;
+                taskGroup.put(task.getId(), task);
+            }
         }
-
-        taskGroup.put(task.getId(), task);
-        return true;
-    }
-
-    @Override
-    public boolean updateSubTask(SubTask subTask) {
-        if (!subTaskGroup.containsKey(subTask.getId())) {
-            return false;
-        }
-
-        SubTask subTaskOriginal = subTaskGroup.get(subTask.getId());  // Закрыть изменение поля epicTaskId
-        subTaskOriginal.setTitle(subTask.getTitle());
-        subTaskOriginal.setDescription(subTask.getDescription());
-
-        if (subTaskOriginal.getStatus() != subTask.getStatus()) {
-            subTaskOriginal.setStatus(subTask.getStatus());
-            updateStatusEpicTask(subTaskOriginal.getEpicTaskId());
-        }
-        return true;
-    }
-
-    @Override
-    public boolean updateEpicTask(EpicTask epicTask) {
-        if (!epicTaskGroup.containsKey(epicTask.getId())) {
-            return false;
-        }
-
-        EpicTask epicTaskOriginal = epicTaskGroup.get(epicTask.getId());
-        epicTaskOriginal.setTitle(epicTask.getTitle());
-        epicTaskOriginal.setDescription(epicTask.getDescription());
         return true;
     }
 

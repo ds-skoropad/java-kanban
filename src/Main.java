@@ -3,6 +3,7 @@
  * Всегда рад любым замечаниям.
  */
 
+import ru.yandex.practicum.kanban.manager.HistoryManager;
 import ru.yandex.practicum.kanban.manager.Managers;
 import ru.yandex.practicum.kanban.manager.TaskManager;
 import ru.yandex.practicum.kanban.task.EpicTask;
@@ -13,25 +14,26 @@ import ru.yandex.practicum.kanban.task.Task;
 import java.util.ArrayList;
 
 public class Main {
-    public static Managers managers;
     public static TaskManager taskManager;
+    public static HistoryManager historyManager;
 
     public static void main(String[] args) {
 
-        managers = new Managers();
+        historyManager = Managers.getDefaultHistory();
         taskManager = Managers.getDefault();
+        taskManager.setHistoryManager(historyManager);
 
-        System.out.println("TASK MANAGER [Version 0.1]\n");
+        System.out.println("TASK MANAGER [Version 0.2]\n");
 
         for (int i = 1; i < 3; i++) {
             taskManager.addTask(new Task("Задача " + i, "Описание задачи " + i, 0, StatusTask.NEW));
         }
 
         for (int i = 1; i < 3; i++) {
-            int epicId = taskManager.addEpicTask(new EpicTask("Сверхзадача.." + i, "Описание сверхзадачи.." + i,
+            int epicId = taskManager.addTask(new EpicTask("Сверхзадача.." + i, "Описание сверхзадачи.." + i,
                     0, StatusTask.NEW, new ArrayList<>()));
             for (int j = 1; j < i + 1; j++) {
-                taskManager.addSubTask(new SubTask("Подзадача...." + j, "Описание подзадачи...." + j,
+                taskManager.addTask(new SubTask("Подзадача...." + j, "Описание подзадачи...." + j,
                         0, StatusTask.NEW, epicId));
             }
         }
@@ -51,21 +53,21 @@ public class Main {
         printAllTask();
 
         System.out.println("MODIFY: updateSubTask{id=4}, result=" +
-                taskManager.updateSubTask(new SubTask("Подзадача....1",
+                taskManager.updateTask(new SubTask("Подзадача....1",
                         "Описание подзадачи....1", 4, StatusTask.IN_PROGRESS, 3)));
         System.out.println("MODIFY: updateSubTask{id=6}, result=" +
-                taskManager.updateSubTask(new SubTask("Подзадача....1",
+                taskManager.updateTask(new SubTask("Подзадача....1",
                         "Описание подзадачи....1", 6, StatusTask.DONE, 5)));
         System.out.println("MODIFY: updateSubTask{id=9}, result=" +
-                taskManager.updateSubTask(new SubTask("Подзадача....3",
+                taskManager.updateTask(new SubTask("Подзадача....3",
                         "Описание подзадачи....3", 9, StatusTask.DONE, 5)));
         printAllTask();
 
         System.out.println("MODIFY: updateSubTask{id=4}, result=" +
-                taskManager.updateSubTask(new SubTask("Подзадача....1",
+                taskManager.updateTask(new SubTask("Подзадача....1",
                         "Описание подзадачи....1", 4, StatusTask.NEW, 3)));
         System.out.println("MODIFY: updateSubTask{id=7}, result=" +
-                taskManager.updateSubTask(new SubTask("Подзадача....2",
+                taskManager.updateTask(new SubTask("Подзадача....2",
                         "Описание подзадачи....2", 7, StatusTask.DONE, 5)));
         printAllTask();
 

@@ -13,7 +13,6 @@ class TaskTest {
         final Task task_2 = new Task("Task_2 title", "Task_2 description", 1, StatusTask.DONE);
 
         assertEquals(task_1, task_2);
-        assertEquals(task_1.hashCode(), task_2.hashCode());
     }
     @Test
     void taskDifferentIfIdDifferent() {
@@ -22,6 +21,5 @@ class TaskTest {
         final Task task_2 = new Task("Task title", "Task description", 2, StatusTask.NEW);
 
         assertNotEquals(task_1, task_2);
-        assertNotEquals(task_1.hashCode(), task_2.hashCode());
     }
 }

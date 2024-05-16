@@ -1,16 +1,11 @@
 package ru.yandex.practicum.kanban.manager;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ManagersTest {
-    static Managers managers;
-    @BeforeEach
-    void beforeEach() {
-        managers = new Managers();
-    } 
     @Test
     void getDefault() {
         final TaskManager taskManager = Managers.getDefault();

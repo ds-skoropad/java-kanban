@@ -21,6 +21,11 @@ public class SubTask extends Task{
     }
 
     @Override
+    public TypeTask getType() {
+        return TypeTask.SUB_TASK;
+    }
+
+    @Override
     public String toString() {
         return "SubTask{" +
                 "title='" + title + '\'' +
