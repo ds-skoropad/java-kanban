@@ -20,6 +20,7 @@ public class InMemoryTaskManager implements TaskManager {
         this.epicTaskGroup = new HashMap<>();
         this.nextId = 1;
     }
+
     public InMemoryTaskManager(HistoryManager historyManager) {
         this.taskGroup = new HashMap<>();
         this.subTaskGroup = new HashMap<>();
