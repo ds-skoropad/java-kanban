@@ -5,7 +5,7 @@ import ru.yandex.practicum.kanban.task.Task;
 import java.util.List;
 
 public interface HistoryManager {
-    boolean add(Task task);
-
-    List<Task> getHistory();
+    void add(Task task);
+    void remove(int id);
+    List<Task> getHistoryList();
 }

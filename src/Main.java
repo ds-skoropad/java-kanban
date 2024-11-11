@@ -1,6 +1,7 @@
 /*
  * Приветствую, Сергей!
  * Всегда рад любым замечаниям.
+ * Болел продолжительный период времени.
  */
 
 import ru.yandex.practicum.kanban.manager.HistoryManager;

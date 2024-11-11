@@ -8,7 +8,6 @@ import java.util.List;
 
 public interface TaskManager {
     // ТЗ 2-с: Получение по идентификатору.
-    
     Task getTask(int id);
 
     SubTask getSubTask(int id);
