@@ -171,11 +171,17 @@ public class InMemoryTaskManager implements TaskManager {
     // ТЗ 2-b: Удаление всех задач.
     @Override
     public void clearTaskGroup() {
+        for (int id : taskGroup.keySet()) {
+            historyManager.remove(id);
+        }
         taskGroup.clear();
     }
 
     @Override
     public void clearSubTaskGroup() {
+        for (int id : subTaskGroup.keySet()) {
+            historyManager.remove(id);
+        }
         subTaskGroup.clear();
 
         for (EpicTask epicTask : epicTaskGroup.values()) {
@@ -186,14 +192,27 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void clearEpicTaskGroup() {
+        for (int id : subTaskGroup.keySet()) {
+            historyManager.remove(id);
+        }
         subTaskGroup.clear();
+
+        for (int id : epicTaskGroup.keySet()) {
+            historyManager.remove(id);
+        }
         epicTaskGroup.clear();
     }
 
     // ТЗ 2-f: Удаление по идентификатору.
     @Override
     public boolean removeTask(int id) {
-        return taskGroup.remove(id) != null;
+        if (!taskGroup.containsKey(id)) {
+            return false;
+        }
+
+        taskGroup.remove(id);
+        historyManager.remove(id);
+        return true;
     }
 
     @Override
@@ -205,6 +224,7 @@ public class InMemoryTaskManager implements TaskManager {
         int epicId = subTaskGroup.get(id).getEpicTaskId();
         epicTaskGroup.get(epicId).removeSubTaskId(id);
         subTaskGroup.remove(id);
+        historyManager.remove(id);
         updateStatusEpicTask(epicId);
         return true;
     }
@@ -217,8 +237,10 @@ public class InMemoryTaskManager implements TaskManager {
 
         for (Integer subTaskId : epicTaskGroup.get(id).getSubTaskIds()) {
             subTaskGroup.remove(subTaskId);
+            historyManager.remove(subTaskId);
         }
         epicTaskGroup.remove(id);
+        historyManager.remove(id);
         return true;
     }
 

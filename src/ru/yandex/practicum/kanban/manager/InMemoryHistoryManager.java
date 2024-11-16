@@ -15,6 +15,8 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void add(Task task) { // Добавить задачу в список просмотра
+        if (task == null) return;
+        removeNode(history.get(task.getId()));
         linkLast(task);
     }
 
@@ -29,54 +31,54 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     // Методы двухсвязного списка
-    public void removeNode(Node node) { // Удаление по Node
+    private void removeNode(Node node) { // Удаление по Node
         if (node == null) return;
-        if (history.isEmpty()) return;
-        if (history.size() == 1) {
-            first = null;
-            last = null;
-            history.clear();
+        if (first == null) return;
+
+        if (node.previous == null) {
+            first = node.next;
         } else {
-            Node prev = node.getPrevious();
-            Node next = node.getNext();
-            if (prev == null) { // Если первый то первым становится следующий
-                first = next;
-                first.setPrevious(null);
-            } else {
-                prev.setNext(next); // null если последний
-            }
-            if (next == null) { // Если последний
-                last = prev;
-                last.setNext(null);
-            } else {
-                next.setPrevious(prev); // null если первый
-            }
-            history.remove(node.getTask().getId());
+            node.previous.next = node.next;
         }
+
+        if (node.next == null) {
+            last = node.previous;
+        } else {
+            node.next.previous = node.previous;
+        }
+
+        history.remove(node.task.getId());
     }
 
-    public void linkLast(Task task) { // Добавляет задачу в конец списка
-        if (task == null) return;
-        removeNode(history.get(task.getId()));
+    private void linkLast(Task task) { // Добавляет задачу в конец списка
         Node newNode = new Node(task);
-        if (history.isEmpty()) {
-            first = newNode;
-            last = newNode;
+        if (first == null) {
+            first = newNode; // Если история пуста новая нода первая
         } else {
-            last.setNext(newNode);
-            newNode.setPrevious(last);
-            last = newNode;
+            last.next = newNode;
+            newNode.previous = last;
         }
+        last = newNode; // Новая нода последняя в любом случае
         history.put(task.getId(), newNode);
     }
 
-    public List<Task> getTasks() { // Возвращает все задачи
+    private List<Task> getTasks() { // Возвращает все задачи
         List<Task> tasks = new ArrayList<>();
         Node countNode = first;
         while (countNode != null) {
-            tasks.add(countNode.getTask());
-            countNode = countNode.getNext();
+            tasks.add(countNode.task);
+            countNode = countNode.next;
         }
         return tasks;
+    }
+
+    private static class Node {
+        private Node previous;
+        private Node next;
+        private Task task;
+
+        public Node(Task task) {
+            this.task = task;
+        }
     }
 }
