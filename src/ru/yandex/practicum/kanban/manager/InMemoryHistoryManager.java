@@ -51,12 +51,11 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     private void linkLast(Task task) { // Добавляет задачу в конец списка
-        Node newNode = new Node(task);
+        Node newNode = new Node(task, last, null);
         if (first == null) {
             first = newNode; // Если история пуста новая нода первая
         } else {
             last.next = newNode;
-            newNode.previous = last;
         }
         last = newNode; // Новая нода последняя в любом случае
         history.put(task.getId(), newNode);
@@ -77,8 +76,10 @@ public class InMemoryHistoryManager implements HistoryManager {
         private Node next;
         private Task task;
 
-        public Node(Task task) {
+        public Node(Task task, Node previous, Node next) {
             this.task = task;
+            this.previous = previous;
+            this.next = next;
         }
     }
 }

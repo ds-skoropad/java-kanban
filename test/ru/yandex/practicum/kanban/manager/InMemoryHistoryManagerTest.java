@@ -12,131 +12,72 @@ import static org.junit.jupiter.api.Assertions.*;
 class InMemoryHistoryManagerTest {
 
     private HistoryManager historyManager;
-    private final int NUM_OF_TASKS = 5; // Тестовое количество задач в списке
+    private Task task1;
+    private Task task2;
+    private Task task3;
 
     @BeforeEach
     public void beforeEach() {
         historyManager = new InMemoryHistoryManager();
-        for (int i = 1; i < NUM_OF_TASKS + 1; i++) {
-            historyManager.add(new Task("Title task " + i, "Description task " + i, i, StatusTask.NEW));
-        }
+        task1 = new Task("Title task 1", "Description task 1", 1, StatusTask.NEW);
+        task2 = new Task("Title task 2", "Description task 2", 2, StatusTask.NEW);
+        task3 = new Task("Title task 3", "Description task 3", 3, StatusTask.NEW);
+        historyManager.add(task1);
+        historyManager.add(task2);
+        historyManager.add(task3);
+
     }
 
-    // Тест метода добаления
     @Test
-    public void add() {
-        final List<Task> history = historyManager.getHistoryList();
-        assertNotNull(history, "Список истории пуст");
-        assertEquals(NUM_OF_TASKS, history.size(), "Несоответствие размера списка истории");
+    public void add() { // Тест метода добаления
+        assertEquals(List.of(task1, task2, task3), historyManager.getHistoryList());
     }
 
-    // Тест метода удаления
     @Test
-    public void remove() {
+    public void remove() { // Тест метода удаления
         historyManager.remove(1);
+        assertEquals(List.of(task2, task3), historyManager.getHistoryList());
 
-        final List<Task> history = historyManager.getHistoryList();
-        assertEquals(NUM_OF_TASKS - 1, history.size(), "Несоответствие размера списка истории");
+        historyManager.remove(2);
+        assertEquals(List.of(task3), historyManager.getHistoryList());
+
+        historyManager.remove(3);
+        assertTrue(historyManager.getHistoryList().isEmpty());
     }
 
-    // Тест на удаление первого элемента
     @Test
-    public void removeFirst() {
+    public void removeFirst() { // Тест на удаление первого элемента
         historyManager.remove(1);
-
-        final List<Task> history = historyManager.getHistoryList();
-        assertEquals(NUM_OF_TASKS - 1, history.size(), "Несоответствие размера списка истории");
-        // Проверяем порядок всех элементов
-        int countId = 2;
-        for (int i = 0; i < history.size(); i++) {
-            assertEquals(countId, history.get(i).getId(), "Несоответствие ID под индексом " + i);
-            countId++;
-        }
+        assertEquals(List.of(task2, task3), historyManager.getHistoryList());
     }
 
-    // Тест на удаление среднего элемента
     @Test
-    public void removeMiddle() {
-        int middleId = NUM_OF_TASKS / 2 + 1;
-        historyManager.remove(middleId);
-
-        final List<Task> history = historyManager.getHistoryList();
-        assertEquals(NUM_OF_TASKS - 1, history.size(), "Несоответствие размера списка истории");
-        // Проверяем порядок всех элементов
-        int countId = 1;
-        for (int i = 0; i < history.size(); i++) {
-            if (countId == middleId) countId++;
-            assertEquals(countId, history.get(i).getId(), "Несоответствие ID под индексом " + i);
-            countId++;
-        }
+    public void removeMiddle() { // Тест на удаление среднего элемента
+        historyManager.remove(2);
+        assertEquals(List.of(task1, task3), historyManager.getHistoryList());
     }
 
-    // Тест на удаление последнего элемента
     @Test
-    public void removeLast() {
-        historyManager.remove(NUM_OF_TASKS);
-
-        final List<Task> history = historyManager.getHistoryList();
-        assertEquals(NUM_OF_TASKS - 1, history.size(), "Несоответствие размера списка истории");
-        // Проверяем порядок всех элементов
-        int countId = 1;
-        for (int i = 0; i < history.size(); i++) {
-            assertEquals(countId, history.get(i).getId(), "Несоответствие ID под индексом " + i);
-            countId++;
-        }
+    public void removeLast() { // Тест на удаление последнего элемента
+        historyManager.remove(3);
+        assertEquals(List.of(task1, task2), historyManager.getHistoryList());
     }
 
-    // Тест на обновление первого элемента
     @Test
-    public void updateFirst() {
-        int updateId = 1;
-        historyManager.add(new Task("Title task " + updateId, "Description task "
-                + updateId, updateId, StatusTask.NEW));
-
-        final List<Task> history = historyManager.getHistoryList();
-        assertEquals(NUM_OF_TASKS, history.size(), "Колличество элементов не должно поменятся");
-        // Проверяем порядок всех элементов
-        int countId = 2;
-        for (int i = 0; i < history.size(); i++) {
-            if (i == history.size() - 1) countId = updateId;
-            assertEquals(countId, history.get(i).getId(), "Несоответствие ID под индексом " + i);
-            countId++;
-        }
+    public void updateFirst() { // Тест на обновление первого элемента
+        historyManager.add(new Task("Title task 1", "Description task 1", 1, StatusTask.NEW));
+        assertEquals(List.of(task2, task3, task1), historyManager.getHistoryList());
     }
 
-    // Тест на обновление среднего элемента
     @Test
-    public void updateMiddle() {
-        int updateId = NUM_OF_TASKS / 2 + 1;
-        historyManager.add(new Task("Title task " + updateId, "Description task "
-                + updateId, updateId, StatusTask.NEW));
-
-        final List<Task> history = historyManager.getHistoryList();
-        assertEquals(NUM_OF_TASKS, history.size(), "Колличество элементов не должно поменятся");
-        // Проверяем порядок всех элементов
-        int countId = 1;
-        for (int i = 0; i < history.size(); i++) {
-            if (countId == updateId) countId++;
-            if (i == history.size() - 1) countId = updateId;
-            assertEquals(countId, history.get(i).getId(), "Несоответствие ID под индексом " + i);
-            countId++;
-        }
+    public void updateMiddle() { // Тест на обновление среднего элемента
+        historyManager.add(new Task("Title task 2", "Description task 2", 2, StatusTask.NEW));
+        assertEquals(List.of(task1, task3, task2), historyManager.getHistoryList());
     }
 
-    // Тест на обновление последнего элемента
     @Test
-    public void updateLast() {
-        int updateId = NUM_OF_TASKS;
-        historyManager.add(new Task("Title task " + updateId, "Description task "
-                + updateId, updateId, StatusTask.NEW));
-
-        final List<Task> history = historyManager.getHistoryList();
-        assertEquals(NUM_OF_TASKS, history.size(), "Колличество элементов не должно поменятся");
-        // Проверяем порядок всех элементов
-        int countId = 1;
-        for (int i = 0; i < history.size(); i++) {
-            assertEquals(countId, history.get(i).getId(), "Несоответствие ID под индексом " + i);
-            countId++;
-        }
+    public void updateLast() { // Тест на обновление последнего элемента
+        historyManager.add(new Task("Title task 3", "Description task 3", 3, StatusTask.NEW));
+        assertEquals(List.of(task1, task2, task3), historyManager.getHistoryList());
     }
 }
