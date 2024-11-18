@@ -1,6 +1,6 @@
 package ru.yandex.practicum.kanban.task;
 
-public class SubTask extends Task{
+public class SubTask extends Task {
     protected int epicTaskId;
 
     public SubTask(String title, String description) {
