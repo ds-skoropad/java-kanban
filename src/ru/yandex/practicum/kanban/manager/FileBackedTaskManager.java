@@ -10,7 +10,7 @@ import java.util.ArrayList;
 // Решил что логика преобразования в CSV необходима только в данном классе, поэтому не встраивал в классы Task
 
 public class FileBackedTaskManager extends InMemoryTaskManager implements TaskManager {
-    private final String SEPARATOR_CSV = ",";
+    private static final String SEPARATOR_CSV = ",";
     private Path file;
 
     public FileBackedTaskManager(Path file) {
