@@ -32,8 +32,9 @@ public final class TaskUtils {
         if (task == null) return "";
 
         StringBuilder sb = new StringBuilder();
+        String data;
         for (CsvHead element : CsvHead.values()) {
-            sb.append(",").append(switch (element) {
+            data = switch (element) {
                 case id -> Integer.toString(task.getId());
                 case type -> task.getType().toString();
                 case name -> task.getTitle();
@@ -41,7 +42,8 @@ public final class TaskUtils {
                 case description -> task.getDescription();
                 case epic -> task.getType().equals(TypeTask.SUB_TASK) ?
                         Integer.toString(((SubTask) task).getEpicTaskId()) : "";
-            });
+            };
+            sb.append(",").append(data);
         }
         sb.deleteCharAt(0);
         return sb.toString();
