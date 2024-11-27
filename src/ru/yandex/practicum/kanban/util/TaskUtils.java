@@ -1,5 +1,6 @@
 package ru.yandex.practicum.kanban.util;
 
+import ru.yandex.practicum.kanban.manager.ManagerSaveException;
 import ru.yandex.practicum.kanban.task.*;
 
 import java.util.ArrayList;
@@ -50,31 +51,29 @@ public final class TaskUtils {
     }
 
     public static Task fromCsvLine(String value) {
-        if (value == null || value.isEmpty()) return null;
+        if (value == null || value.isEmpty()) {
+            throw new ManagerSaveException("csv conversion error");
+        }
 
         String[] parts = value.split(CSV_SEPARATOR, -1);
-        if (parts.length < CsvHead.values().length) return null; // нарушена структура строки
-
-        TypeTask type;
-        if (stringInArrEnum(TypeTask.values(), parts[CsvHead.type.ordinal()])) {
-            type = TypeTask.valueOf(parts[CsvHead.type.ordinal()]);
-        } else {
-            return null;
+        if (parts.length < CsvHead.values().length) {
+            throw new ManagerSaveException("csv conversion error");
         }
 
-        int id;
-        if (isNumber(parts[CsvHead.id.ordinal()])) {
-            id = Integer.parseInt(parts[CsvHead.id.ordinal()]);
-        } else {
-            return null;
+        if (!stringInArrEnum(TypeTask.values(), parts[CsvHead.type.ordinal()])) {
+            throw new ManagerSaveException("csv conversion error");
         }
+        TypeTask type = TypeTask.valueOf(parts[CsvHead.type.ordinal()]);
 
-        StatusTask status;
-        if (stringInArrEnum(StatusTask.values(), parts[CsvHead.status.ordinal()])) {
-            status = StatusTask.valueOf(parts[CsvHead.status.ordinal()]);
-        } else {
-            return null;
+        if (!isNumber(parts[CsvHead.id.ordinal()])) {
+            throw new ManagerSaveException("csv conversion error");
         }
+        int id = Integer.parseInt(parts[CsvHead.id.ordinal()]);
+
+        if (!stringInArrEnum(StatusTask.values(), parts[CsvHead.status.ordinal()])) {
+            throw new ManagerSaveException("csv conversion error");
+        }
+        StatusTask status = StatusTask.valueOf(parts[CsvHead.status.ordinal()]);
 
         String name = parts[CsvHead.name.ordinal()];
         String description = parts[CsvHead.description.ordinal()];
