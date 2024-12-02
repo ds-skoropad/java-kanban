@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Map;
 
 public class InMemoryTaskManager implements TaskManager {
-    private final Map<Integer, Task> taskGroup;
-    private final Map<Integer, SubTask> subTaskGroup;
-    private final Map<Integer, EpicTask> epicTaskGroup;
+    protected final Map<Integer, Task> taskGroup;
+    protected final Map<Integer, SubTask> subTaskGroup;
+    protected final Map<Integer, EpicTask> epicTaskGroup;
     private HistoryManager historyManager;
-    private int nextId;
+    protected int nextId;
 
     public InMemoryTaskManager() {
         this.taskGroup = new HashMap<>();
@@ -36,7 +36,7 @@ public class InMemoryTaskManager implements TaskManager {
     // ТЗ 2-с: Получение по идентификатору.
     @Override
     public Task getTask(int id) {
-        Task task = taskGroup.get(id); // Исправлено! Согласен, создал лишнюю нагрузку на ЦП.
+        Task task = taskGroup.get(id);
 
         if (historyManager != null) {
             historyManager.add(task);
