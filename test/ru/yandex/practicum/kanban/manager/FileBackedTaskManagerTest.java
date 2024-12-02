@@ -8,7 +8,6 @@ import ru.yandex.practicum.kanban.task.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,7 +35,7 @@ class FileBackedTaskManagerTest {
     }
 
     @Test
-    void shouldCorrectSaveAndLoadFromFile() throws IOException {
+    void shouldCorrectSaveAndLoadFromFile() {
         final FileBackedTaskManager fb1 = new FileBackedTaskManager(tempFile);
 
         fb1.addTask(new Task("Task 1", "Description"));
