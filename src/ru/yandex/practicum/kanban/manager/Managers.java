@@ -1,11 +1,7 @@
 package ru.yandex.practicum.kanban.manager;
 
-/*
- * Выполняя задание, я упустил момент про утилитный класс.
- * Благодарю за замечание. Исправлено.
- */
-
 public class Managers {
+
     private Managers() {
     }
 

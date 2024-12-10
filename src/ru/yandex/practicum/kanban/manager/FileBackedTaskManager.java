@@ -1,6 +1,8 @@
 package ru.yandex.practicum.kanban.manager;
 
-import ru.yandex.practicum.kanban.task.*;
+import ru.yandex.practicum.kanban.task.EpicTask;
+import ru.yandex.practicum.kanban.task.SubTask;
+import ru.yandex.practicum.kanban.task.Task;
 import ru.yandex.practicum.kanban.util.TaskUtils;
 
 import java.io.*;
@@ -42,20 +44,20 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     @Override
-    public void clearSubTaskGroup() {
-        super.clearSubTaskGroup();
+    public void clearSubGroup() {
+        super.clearSubGroup();
         save();
     }
 
     @Override
-    public void clearEpicTaskGroup() {
-        super.clearEpicTaskGroup();
+    public void clearEpicGroup() {
+        super.clearEpicGroup();
         save();
     }
 
     @Override
-    public boolean removeSubTask(int id) {
-        boolean result = super.removeSubTask(id);
+    public boolean removeSub(int id) {
+        boolean result = super.removeSub(id);
         save();
         return result;
     }
@@ -68,8 +70,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     @Override
-    public boolean removeEpicTask(int id) {
-        boolean result = super.removeEpicTask(id);
+    public boolean removeEpic(int id) {
+        boolean result = super.removeEpic(id);
         save();
         return result;
     }
@@ -82,11 +84,11 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 writer.write(TaskUtils.toCsvLine(task));
                 writer.newLine();
             }
-            for (Task epic : getEpicTaskGroup()) {
+            for (Task epic : getEpicGroup()) {
                 writer.write(TaskUtils.toCsvLine(epic));
                 writer.newLine();
             }
-            for (Task sub : getSubTaskGroup()) {
+            for (Task sub : getSubGroup()) {
                 writer.write(TaskUtils.toCsvLine(sub));
                 writer.newLine();
             }
@@ -108,19 +110,18 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 while (reader.ready()) {
                     taskData = reader.readLine();
                     task = TaskUtils.fromCsvLine(taskData);
-                    if (task != null && !fb.taskGroup.containsKey(task.getId()) &&
-                            !fb.epicTaskGroup.containsKey(task.getId()) &&
-                            !fb.subTaskGroup.containsKey(task.getId())) {
+                    if (!fb.taskGroup.containsKey(task.getId()) && !fb.epicGroup.containsKey(task.getId()) &&
+                            !fb.subGroup.containsKey(task.getId())) {
                         if (task.getId() > idMax) {
                             idMax = task.getId();
                         }
                         switch (task.getType()) {
                             case TASK -> fb.taskGroup.put(task.getId(), task);
-                            case EPIC_TASK -> fb.epicTaskGroup.put(task.getId(), (EpicTask) task);
+                            case EPIC_TASK -> fb.epicGroup.put(task.getId(), (EpicTask) task);
                             case SUB_TASK -> {
                                 sub = (SubTask) task;
-                                fb.subTaskGroup.put(sub.getId(), sub);
-                                fb.epicTaskGroup.get(sub.getEpicTaskId()).addSubTaskId(sub.getId());
+                                fb.subGroup.put(sub.getId(), sub);
+                                fb.epicGroup.get(sub.getEpicId()).addSubId(sub.getId());
                             }
                         }
                     }
@@ -133,4 +134,3 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         return fb;
     }
 }
-

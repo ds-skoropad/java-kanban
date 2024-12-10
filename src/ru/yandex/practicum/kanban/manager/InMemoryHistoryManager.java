@@ -2,7 +2,10 @@ package ru.yandex.practicum.kanban.manager;
 
 import ru.yandex.practicum.kanban.task.Task;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class InMemoryHistoryManager implements HistoryManager {
     private Map<Integer, Node> history;
@@ -13,27 +16,30 @@ public class InMemoryHistoryManager implements HistoryManager {
         this.history = new HashMap<>();
     }
 
+    // Добавить задачу в список просмотра
     @Override
-    public void add(Task task) { // Добавить задачу в список просмотра
+    public void add(Task task) {
         if (task == null) return;
         removeNode(history.get(task.getId()));
         linkLast(task);
     }
 
+    // Удаление задачи из просмотра (также для применения при удалении задачи)
     @Override
-    public void remove(int id) { // Удаление задачи из просмотра (также для приминения при удалении задачи)
+    public void remove(int id) {
         removeNode(history.get(id));
     }
 
+    // Возвращает список истории
     @Override
-    public List<Task> getHistoryList() { // Возвращает список истории
+    public List<Task> getHistoryList() {
         return getTasks();
     }
 
-    // Методы двухсвязного списка
-    private void removeNode(Node node) { // Удаление по Node
-        if (node == null) return;
-        if (first == null) return;
+    // Методы двух-связного списка
+
+    private void removeNode(Node node) {
+        if (node == null || first == null) return;
 
         if (node.previous == null) {
             first = node.next;
@@ -50,7 +56,8 @@ public class InMemoryHistoryManager implements HistoryManager {
         history.remove(node.task.getId());
     }
 
-    private void linkLast(Task task) { // Добавляет задачу в конец списка
+    // Добавляет задачу в конец списка
+    private void linkLast(Task task) {
         Node newNode = new Node(task, last, null);
         if (first == null) {
             first = newNode; // Если история пуста новая нода первая
@@ -61,7 +68,8 @@ public class InMemoryHistoryManager implements HistoryManager {
         history.put(task.getId(), newNode);
     }
 
-    private List<Task> getTasks() { // Возвращает все задачи
+    // Возвращает все задачи
+    private List<Task> getTasks() {
         List<Task> tasks = new ArrayList<>();
         Node countNode = first;
         while (countNode != null) {
