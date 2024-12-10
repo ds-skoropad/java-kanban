@@ -5,44 +5,41 @@ import ru.yandex.practicum.kanban.task.SubTask;
 import ru.yandex.practicum.kanban.task.Task;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskManager {
-    // ТЗ 2-с: Получение по идентификатору.
-    Task getTask(int id);
 
-    SubTask getSubTask(int id);
+    Optional<Task> getTask(int id);
 
-    EpicTask getEpicTask(int id);
+    Optional<SubTask> getSub(int id);
 
-    // ТЗ 2-a: Получение списка всех задач.
+    Optional<EpicTask> getEpic(int id);
+
     List<Task> getTaskGroup();
 
-    List<SubTask> getSubTaskGroup();
+    List<SubTask> getSubGroup();
 
-    List<EpicTask> getEpicTaskGroup();
+    List<EpicTask> getEpicGroup();
 
-    // ТЗ 3-а: Получение списка всех подзадач определённого эпика.
-    List<SubTask> getSubTaskGroupFromEpic(int epicTaskId);
+    List<SubTask> getEpicSubTasks(int epicId);
 
-    // ТЗ 2-d: Создание. Сам объект должен передаваться в качестве параметра.
+    List<Task> getPrioritizedTasks();
+
     int addTask(Task task);
 
-    // ТЗ 2-е: Обновление. Новая версия объекта с верным идентификатором передаётся в виде параметра.
     boolean updateTask(Task task);
 
-    // ТЗ 2-b: Удаление всех задач.
     void clearTaskGroup();
 
-    void clearSubTaskGroup();
+    void clearSubGroup();
 
-    void clearEpicTaskGroup();
+    void clearEpicGroup();
 
-    // ТЗ 2-f: Удаление по идентификатору.
     boolean removeTask(int id);
 
-    boolean removeSubTask(int id);
+    boolean removeSub(int id);
 
-    boolean removeEpicTask(int id);
+    boolean removeEpic(int id);
 
     void setHistoryManager(HistoryManager historyManager);
 }

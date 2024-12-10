@@ -1,25 +1,72 @@
 package ru.yandex.practicum.kanban.task;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class TaskTest {
+    Task task1;
+    Task task2;
 
+    void setTasks(Task task1, Task task2) {
+        this.task1 = task1;
+        this.task2 = task2;
+    }
+
+    @BeforeEach
+    void beforeEach() {
+        setTasks(new Task(), new Task());
+    }
+
+    // Все поля разные кроме id
     @Test
     void taskSameIfIdSame() {
-        // Все поля разные кроме id
-        final Task task_1 = new Task("Task_1 title", "Task_1 description", 1, StatusTask.NEW);
-        final Task task_2 = new Task("Task_2 title", "Task_2 description", 1, StatusTask.DONE);
+        final int id = 1;
 
-        assertEquals(task_1, task_2);
+        task1.setId(id);
+        task1.setTitle("Title1");
+        task1.setDescription("Description1");
+        task1.setStatus(StatusTask.NEW);
+        task1.setStartTime(LocalDateTime.now());
+        task1.setDuration(Duration.ofMinutes(10));
+
+        task2.setId(id);
+        task2.setTitle("Title2");
+        task2.setDescription("Description2");
+        task2.setStatus(StatusTask.DONE);
+        task2.setStartTime(LocalDateTime.now().plusMinutes(20));
+        task2.setDuration(Duration.ofMinutes(20));
+
+        assertEquals(task1, task2);
     }
+
+    // Все поля одинаковые кроме id
     @Test
     void taskDifferentIfIdDifferent() {
-        // Все поля одинаковые кроме id
-        final Task task_1 = new Task("Task title", "Task description", 1, StatusTask.NEW);
-        final Task task_2 = new Task("Task title", "Task description", 2, StatusTask.NEW);
+        final String title = "Title";
+        final String description = "Description";
+        final StatusTask status = StatusTask.NEW;
+        final Duration duration = Duration.ofMinutes(10);
+        final LocalDateTime now = LocalDateTime.now();
 
-        assertNotEquals(task_1, task_2);
+        task1.setId(1);
+        task1.setTitle(title);
+        task1.setDescription(description);
+        task1.setStatus(status);
+        task1.setStartTime(now);
+        task1.setDuration(duration);
+
+        task2.setId(2);
+        task2.setTitle(title);
+        task2.setDescription(description);
+        task2.setStatus(status);
+        task2.setStartTime(now);
+        task2.setDuration(duration);
+
+        assertNotEquals(task1, task2);
     }
 }
