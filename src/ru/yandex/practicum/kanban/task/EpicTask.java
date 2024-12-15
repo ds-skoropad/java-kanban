@@ -10,8 +10,14 @@ public class EpicTask extends Task {
     protected List<Integer> subIds;
     protected LocalDateTime endTime;
 
-    public EpicTask() {
-        super();
+    public EpicTask(String title, String description, int id, StatusTask status,
+                    Duration duration, LocalDateTime startTime, List<Integer> subIds) {
+        super(title, description, id, status, duration, startTime);
+        this.subIds = subIds;
+    }
+
+    public EpicTask(String title, String description, int id) {
+        super(title, description, id);
         this.subIds = new ArrayList<>();
     }
 
@@ -20,15 +26,9 @@ public class EpicTask extends Task {
         this.subIds = new ArrayList<>();
     }
 
-    public EpicTask(String title, String description, int id, StatusTask status, List<Integer> subIds) {
-        super(title, description, id, status);
-        this.subIds = subIds;
-    }
-
-    public EpicTask(String title, String description, int id, StatusTask status, List<Integer> subIds,
-                    Duration duration, LocalDateTime startTime) {
-        super(title, description, id, status, duration, startTime);
-        this.subIds = subIds;
+    public EpicTask() {
+        super();
+        this.subIds = new ArrayList<>();
     }
 
     public List<Integer> getSubIds() {

@@ -40,6 +40,4 @@ public interface TaskManager {
     boolean removeSub(int id);
 
     boolean removeEpic(int id);
-
-    void setHistoryManager(HistoryManager historyManager);
 }

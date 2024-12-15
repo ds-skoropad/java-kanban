@@ -1,11 +1,11 @@
 package ru.yandex.practicum.kanban.manager;
 
-import ru.yandex.practicum.kanban.task.EpicTask;
-import ru.yandex.practicum.kanban.task.StatusTask;
-import ru.yandex.practicum.kanban.task.SubTask;
-import ru.yandex.practicum.kanban.task.Task;
+import ru.yandex.practicum.kanban.task.*;
 
-import java.time.*;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -14,21 +14,22 @@ public class InMemoryTaskManager implements TaskManager {
     protected final Map<Integer, Task> taskGroup;
     protected final Map<Integer, SubTask> subGroup;
     protected final Map<Integer, EpicTask> epicGroup;
+    private final HistoryManager historyManager;
     private final Map<Integer, Boolean> timeLine; // 35040 интервалов по 15 мин в году
     private final Set<Task> prioritizedTasks;
     private final LocalDateTime timeLineStart; // старт планирования
     private static final Comparator<Task> compareStartTime = Comparator.comparing(Task::getStartTime,
             Comparator.comparing(startTime -> startTime.orElse(LocalDateTime.MIN)));
-    private HistoryManager historyManager;
-    protected int nextId;
     private static final int TIME_LINE_DAYS = 365;
     private static final int MINUTE_INTERVAL = 15;
     private static final int MAX_INTERVALS = TIME_LINE_DAYS * 24 * 60 / MINUTE_INTERVAL;
+    protected int nextId;
 
     public InMemoryTaskManager() {
         this.taskGroup = new HashMap<>();
         this.subGroup = new HashMap<>();
         this.epicGroup = new HashMap<>();
+        historyManager = Managers.getDefaultHistory();
         this.timeLineStart = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0));
         this.prioritizedTasks = new TreeSet<>(compareStartTime);
         this.nextId = 1;
@@ -37,55 +38,30 @@ public class InMemoryTaskManager implements TaskManager {
                 .collect(Collectors.toMap(
                         i -> i,
                         i -> false));
-    }
-
-    public InMemoryTaskManager(HistoryManager historyManager) {
-        this.taskGroup = new HashMap<>();
-        this.subGroup = new HashMap<>();
-        this.epicGroup = new HashMap<>();
-        this.timeLineStart = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0));
-        this.prioritizedTasks = new TreeSet<>(compareStartTime);
-        this.historyManager = historyManager;
-        this.nextId = 1;
-        this.timeLine = IntStream.rangeClosed(1, MAX_INTERVALS)
-                .boxed()
-                .collect(Collectors.toMap(
-                        i -> i,
-                        i -> false));
-    }
-
-    public void setHistoryManager(HistoryManager historyManager) {
-        this.historyManager = historyManager;
     }
 
     @Override
     public Optional<Task> getTask(int id) {
         Optional<Task> task = Optional.ofNullable(taskGroup.get(id));
 
-        if (historyManager != null && task.isPresent()) {
-            historyManager.add(task.get());
-        }
+        task.ifPresent(historyManager::add);
         return task;
     }
 
     @Override
     public Optional<SubTask> getSub(int id) {
-        Optional<SubTask> subTask = Optional.ofNullable(subGroup.get(id));
+        Optional<SubTask> sub = Optional.ofNullable(subGroup.get(id));
 
-        if (historyManager != null && subTask.isPresent()) {
-            historyManager.add(subTask.get());
-        }
-        return subTask;
+        sub.ifPresent(historyManager::add);
+        return sub;
     }
 
     @Override
     public Optional<EpicTask> getEpic(int id) {
-        Optional<EpicTask> epicTask = Optional.ofNullable(epicGroup.get(id));
+        Optional<EpicTask> epic = Optional.ofNullable(epicGroup.get(id));
 
-        if (historyManager != null && epicTask.isPresent()) {
-            historyManager.add(epicTask.get());
-        }
-        return epicTask;
+        epic.ifPresent(historyManager::add);
+        return epic;
     }
 
     @Override
@@ -121,12 +97,9 @@ public class InMemoryTaskManager implements TaskManager {
     public int addTask(Task task) {
         if (task == null) return 0;
 
+        task.setId(nextId);
         switch (task.getType()) {
             case SUB_TASK -> {
-                if (overlayPrioritizedTasksInterval(task)) {
-                    throw new ManagerSaveException("startTime overlay");
-                }
-
                 SubTask sub = (SubTask) task;
                 EpicTask epic = epicGroup.get(sub.getEpicId());
 
@@ -134,13 +107,13 @@ public class InMemoryTaskManager implements TaskManager {
                     return 0;
                 }
 
-                sub.setId(nextId);
+                prioritizedTasksAdd(task);
                 subGroup.put(nextId, sub);
                 epic.addSubId(nextId);
                 updateStatusEpicTask(epic.getId());
 
+                // Вычисление времени эпика. Экономия вызова updateTimeEpicTask()
                 if (sub.getStartTime().isPresent() && sub.getEndTime().isPresent()) {
-                    prioritizedTasksAdd(task);
                     if (epic.getStartTime().isEmpty() ||
                             epic.getStartTime().get().isAfter(sub.getStartTime().get())) {
                         epic.setStartTime(sub.getStartTime().get());
@@ -152,24 +125,10 @@ public class InMemoryTaskManager implements TaskManager {
                 // Продолжительность эпика это продолжительность всех подзадач, даже если нет времени начала у подзадачи
                 epic.setDuration(epic.getDuration().plus(sub.getDuration()));
             }
-            case EPIC_TASK -> {
-                EpicTask epic = (EpicTask) task;
-                epic.setId(nextId);
-                epic.setStatus(StatusTask.NEW);
-                epic.setSubIds(new ArrayList<>());
-                epic.setDuration(Duration.ZERO);
-                epic.setStartTime(null);
-                epicGroup.put(nextId, epic);
-            }
+            case EPIC_TASK -> epicGroup.put(nextId, new EpicTask(task.getTitle(), task.getDescription(), nextId));
             case TASK -> {
-                if (overlayPrioritizedTasksInterval(task)) {
-                    throw new ManagerSaveException("startTime overlay");
-                }
-                task.setId(nextId);
+                prioritizedTasksAdd(task);
                 taskGroup.put(nextId, task);
-                if (task.getStartTime().isPresent()) {
-                    prioritizedTasksAdd(task);
-                }
             }
         }
         return ++nextId;
@@ -183,15 +142,11 @@ public class InMemoryTaskManager implements TaskManager {
         switch (task.getType()) {
             case SUB_TASK -> {
                 if (!subGroup.containsKey(id)) return false;
-                if (overlayPrioritizedTasksInterval(task)) {
-                    throw new ManagerSaveException("startTime overlay");
-                }
 
+                prioritizedTasksUpdate(task);
                 SubTask subNew = (SubTask) task;
                 SubTask subCurrent = subGroup.get(id);
                 EpicTask epic = epicGroup.get(subCurrent.getEpicId());
-
-                prioritizedTasksRemove(subCurrent);
 
                 subCurrent.setTitle(subNew.getTitle());
                 subCurrent.setDescription(subNew.getDescription());
@@ -204,8 +159,6 @@ public class InMemoryTaskManager implements TaskManager {
                 subCurrent.setStartTime(subNew.getStartTime().orElse(null));
                 subCurrent.setDuration(subNew.getDuration());
                 updateTimeEpicTask(epic.getId()); // Пересчет эпика time & duration
-
-                prioritizedTasksAdd(subCurrent);
             }
             case EPIC_TASK -> {
                 if (!epicGroup.containsKey(id)) return false;
@@ -217,11 +170,8 @@ public class InMemoryTaskManager implements TaskManager {
             }
             case TASK -> {
                 if (!taskGroup.containsKey(id)) return false;
-                if (overlayPrioritizedTasksInterval(task)) {
-                    throw new ManagerSaveException("startTime overlay");
-                }
-                prioritizedTasksRemove(taskGroup.get(task.getId()));
-                prioritizedTasksAdd(task);
+
+                prioritizedTasksUpdate(task);
                 taskGroup.put(task.getId(), task);
             }
         }
@@ -342,11 +292,17 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     // Метод пересечения двух задач (решение до интервального планирования)
-    private boolean overlayTasks(Task task1, Task task2) {
-        return task1 != null && task2 != null && task1.getStartTime().isPresent() && task2.getStartTime().isPresent() &&
-                task1.getEndTime().isPresent() && task2.getEndTime().isPresent() &&
-                task1.getStartTime().get().isBefore(task2.getEndTime().get()) &&
-                task2.getStartTime().get().isBefore(task1.getEndTime().get());
+    private boolean overlayTasks(Task taskA, Task taskB) {
+        if (taskA == null || taskB == null) return false;
+
+        LocalDateTime startA = taskA.getStartTime().orElse(null);
+        LocalDateTime endA = taskA.getEndTime().orElse(null);
+        LocalDateTime startB = taskB.getStartTime().orElse(null);
+        LocalDateTime endB = taskB.getEndTime().orElse(null);
+
+        if (startA == null || endA == null) return false;
+
+        return startA.isBefore(endB) && endA.isAfter(startB);
     }
 
     // Проверка пересечения времени со всеми задачами (решение до интервального планирования)
@@ -389,27 +345,48 @@ public class InMemoryTaskManager implements TaskManager {
         List<Integer> taskIntervals = getTaskIntervals(task);
 
         // При обновлении задачи ее старые интервалы не учитываются, т.к. после обновления они будут заменены на новые
-        Task currentTask = taskGroup.containsKey(task.getId()) ?
-                taskGroup.get(task.getId()) : subGroup.get(task.getId());
+        Task currentTask = (task.getType() == TypeTask.TASK) ? taskGroup.get(task.getId()) : subGroup.get(task.getId());
         if (currentTask != null) {
-            if (prioritizedTasks.contains(currentTask)) {
-                // Обновление задачи. Старые интервалы обновляемой задачи в приоритетном списке в учет не берутся.
-                List<Integer> currentInterval = getTaskIntervals(currentTask);
-                taskIntervals = taskIntervals.stream()
-                        .filter(i -> !currentInterval.contains(i))
-                        .toList();
-            }
+            // Обновление задачи. Старые интервалы обновляемой задачи в приоритетном списке в учет не берутся.
+            List<Integer> currentInterval = getTaskIntervals(currentTask);
+            taskIntervals = taskIntervals.stream()
+                    .filter(i -> !currentInterval.contains(i))
+                    .toList();
         }
         return taskIntervals.stream().anyMatch(timeLine::get);
     }
 
+    // Методы для приоритетного списка
+
     private void prioritizedTasksAdd(Task task) {
+        if (task.getStartTime().isEmpty()) return;
+
+        if (overlayPrioritizedTasksInterval(task)) {
+            throw new ManagerSaveException("startTime overlay");
+        }
+
+        getTaskIntervals(task).forEach(i -> timeLine.put(i, true));
+        prioritizedTasks.add(task);
+    }
+
+    private void prioritizedTasksUpdate(Task task) {
+        if (task.getStartTime().isEmpty()) return;
+
+        if (overlayPrioritizedTasksInterval(task)) {
+            throw new ManagerSaveException("startTime overlay");
+        }
+        // Сначала обработать старые интервалы обновляемой задачи
+        Task currentTask = (task.getType() == TypeTask.TASK) ? taskGroup.get(task.getId()) : subGroup.get(task.getId());
+        if (currentTask != null) {
+            getTaskIntervals(currentTask).forEach(i -> timeLine.put(i, false));
+        }
+        // Обновляем интервалы и добавляем новую задачу в приоритетный список
         getTaskIntervals(task).forEach(i -> timeLine.put(i, true));
         prioritizedTasks.add(task);
     }
 
     private void prioritizedTasksRemove(Task task) {
-        prioritizedTasks.remove(task);
         getTaskIntervals(task).forEach(i -> timeLine.put(i, false));
+        prioritizedTasks.remove(task);
     }
 }

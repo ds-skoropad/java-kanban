@@ -2,7 +2,6 @@ import ru.yandex.practicum.kanban.manager.HistoryManager;
 import ru.yandex.practicum.kanban.manager.Managers;
 import ru.yandex.practicum.kanban.manager.TaskManager;
 import ru.yandex.practicum.kanban.task.EpicTask;
-import ru.yandex.practicum.kanban.task.StatusTask;
 import ru.yandex.practicum.kanban.task.SubTask;
 import ru.yandex.practicum.kanban.task.Task;
 
@@ -19,7 +18,6 @@ public class Main {
     public static void main(String[] args) {
         historyManager = Managers.getDefaultHistory();
         taskManager = Managers.getDefault();
-        taskManager.setHistoryManager(historyManager);
 
         System.out.println("TASK MANAGER | Version 0.3\n");
 
@@ -27,7 +25,7 @@ public class Main {
                 .mapToObj(i -> Stream.of(
                         new Task("Task " + i, "Description"),
                         new EpicTask("Epic " + i, "Description"),
-                        new SubTask("Sub " + i, "Description", 0, StatusTask.NEW, i)))
+                        new SubTask(i, "Sub " + i, "Description")))
                 .flatMap(Function.identity())
                 .sorted(Comparator.comparing(Task::getType).reversed())
                 .forEach(taskManager::addTask);

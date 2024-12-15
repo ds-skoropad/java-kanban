@@ -105,12 +105,12 @@ public final class TaskUtils {
         Task task;
         task = switch (type) {
             case TypeTask.TASK -> new Task(name, description, id, status, duration, start);
-            case TypeTask.EPIC_TASK -> new EpicTask(name, description, id, status, new ArrayList<>(), duration, start);
+            case TypeTask.EPIC_TASK -> new EpicTask(name, description, id, status, duration, start, new ArrayList<>());
             case TypeTask.SUB_TASK -> {
                 if (!isNumber(parts[CsvHead.epic.ordinal()])) {
                     throw new ManagerSaveException("Parse CSV: epic is not a number");
                 } else {
-                    yield new SubTask(name, description, id, status, Integer.parseInt(parts[CsvHead.epic.ordinal()]),
+                    yield new SubTask(Integer.parseInt(parts[CsvHead.epic.ordinal()]), name, description, id, status,
                             duration, start);
                 }
             }

@@ -10,7 +10,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -58,13 +57,13 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         this.manager = manager;
         startTimeGeneral = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0));
 
-        task1 = new Task();
-        task2 = new Task();
-        epic1 = new EpicTask();
-        epic2 = new EpicTask();
-        sub1Epic1 = new SubTask(ID_EPIC_1);
-        sub1Epic2 = new SubTask(ID_EPIC_2);
-        sub2Epic2 = new SubTask(ID_EPIC_2);
+        task1 = new Task("", "", ID_TASK_1);
+        task2 = new Task("", "", ID_TASK_2);
+        epic1 = new EpicTask("", "", ID_EPIC_1);
+        epic2 = new EpicTask("", "", ID_EPIC_2);
+        sub1Epic1 = new SubTask(ID_EPIC_1, "", "", ID_SUB_1_EPIC_1);
+        sub1Epic2 = new SubTask(ID_EPIC_2, "", "", ID_SUB_1_EPIC_2);
+        sub2Epic2 = new SubTask(ID_EPIC_2, "", "", ID_SUB_2_EPIC_2);
 
         tasks = List.of(task1, task2);
         epics = List.of(epic1, epic2);
@@ -326,8 +325,8 @@ public abstract class TaskManagerTest<T extends TaskManager> {
 
         // Epic - обновляется только title и description
         final List<Integer> newSubIds = List.of(1000, 2000, 3000);
-        manager.updateTask(new EpicTask(newTitle, newDescription, ID_EPIC_1, newStatus, newSubIds, newDuration,
-                newStartTime));
+        manager.updateTask(new EpicTask(newTitle, newDescription, ID_EPIC_1, newStatus, newDuration, newStartTime, newSubIds
+        ));
         assertTrue(manager.getEpic(ID_EPIC_1).isPresent());
         final EpicTask updateEpic = manager.getEpic(ID_EPIC_1).get();
 
@@ -351,7 +350,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
 
         // SubTask - обновляются все поля кроме EpicId
         final int newEpicId = 1000;
-        manager.updateTask(new SubTask(newTitle, newDescription, ID_SUB_2_EPIC_2, newStatus, newEpicId, newDuration,
+        manager.updateTask(new SubTask(newEpicId, newTitle, newDescription, ID_SUB_2_EPIC_2, newStatus, newDuration,
                 newStartTime));
         assertTrue(manager.getSub(ID_SUB_2_EPIC_2).isPresent());
         final SubTask updateSub = manager.getSub(ID_SUB_2_EPIC_2).get();
@@ -560,12 +559,17 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         if (task == null) return null;
 
         return switch (task.getType()) {
-            case TASK -> new Task(task.getTitle(), task.getDescription(), task.getId(), status);
-            case EPIC_TASK -> new EpicTask(task.getTitle(), task.getDescription(), task.getId(), status,
-                    new ArrayList<>());
+            case TASK -> new Task(task.getTitle(), task.getDescription(), task.getId(), status,
+                    task.getDuration(), task.getStartTime().orElse(null));
+            case EPIC_TASK -> {
+                List<Integer> subIds = ((EpicTask) task).getSubIds();
+                yield new EpicTask(task.getTitle(), task.getDescription(), task.getId(), status,
+                        task.getDuration(), task.getStartTime().orElse(null), subIds);
+            }
             case SUB_TASK -> {
                 int epicId = ((SubTask) task).getEpicId();
-                yield new SubTask(task.getTitle(), task.getDescription(), task.getId(), status, epicId);
+                yield new SubTask(epicId, task.getTitle(), task.getDescription(), task.getId(), status,
+                        task.getDuration(), task.getStartTime().orElse(null));
             }
         };
     }

@@ -13,38 +13,26 @@ public class Task {
     protected Duration duration;
     protected LocalDateTime startTime;
 
-    public Task() {
-        this.title = "";
-        this.description = "";
-        this.status = StatusTask.NEW;
-        this.duration = Duration.ZERO;
-        this.id = 0;
-    }
-
-    public Task(String title, String description) {
-        this.title = title;
-        this.description = description;
-        this.status = StatusTask.NEW;
-        this.duration = Duration.ZERO;
-        this.id = 0;
-    }
-
-    public Task(String title, String description, int id, StatusTask status) {
-        this.title = title;
-        this.description = description;
-        this.status = status;
-        this.duration = Duration.ZERO;
-        this.id = id;
-    }
-
     public Task(String title, String description, int id, StatusTask status, Duration duration,
                 LocalDateTime startTime) {
         this.title = title;
         this.description = description;
+        this.id = id;
         this.status = status;
         this.duration = duration;
         this.startTime = startTime;
-        this.id = id;
+    }
+
+    public Task(String title, String description, int id) {
+        this(title, description, id, StatusTask.NEW, Duration.ZERO, null);
+    }
+
+    public Task(String title, String description) {
+        this(title, description, 0, StatusTask.NEW, Duration.ZERO, null);
+    }
+
+    public Task() {
+        this("", "", 0, StatusTask.NEW, Duration.ZERO, null);
     }
 
     public TypeTask getType() {
