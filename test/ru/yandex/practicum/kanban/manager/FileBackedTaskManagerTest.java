@@ -49,11 +49,14 @@ class FileBackedTaskManagerTest extends TaskManagerTest<TaskManager> {
     @Test
     void shouldBeCorrectSaveAndLoadFromFile() {
         final FileBackedTaskManager fb1 = new FileBackedTaskManager(tempFile);
+        final LocalDateTime nowDateTime = LocalDateTime.now();
 
         fb1.addTask(new Task("Task 1", "Description"));
+        fb1.addTask(new Task("Task 2", "Description", 2, StatusTask.NEW,
+                Duration.ofMinutes(10), nowDateTime.plusMinutes(30)));
         fb1.addTask(new EpicTask("Epic 1", "Description"));
-        fb1.addTask(new SubTask(2, "Sub 1", "Description", 3, StatusTask.NEW,
-                Duration.ofMinutes(10), LocalDateTime.now()));
+        fb1.addTask(new SubTask(3, "Sub 1", "Description", 4, StatusTask.NEW,
+                Duration.ofMinutes(10), nowDateTime));
 
         final FileBackedTaskManager fb2 = FileBackedTaskManager.loadFromFile(tempFile);
 
@@ -63,6 +66,8 @@ class FileBackedTaskManagerTest extends TaskManagerTest<TaskManager> {
 
         assertEquals(fb1.getEpicGroup().getFirst().getSubIds(),
                 fb2.getEpicGroup().getFirst().getSubIds());
+
+        assertEquals(fb1.getPrioritizedTasks(), fb2.getPrioritizedTasks());
     }
 
     // Должно быть исключение при загрузке с несуществующего файла

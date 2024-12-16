@@ -111,12 +111,20 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                             idMax = task.getId();
                         }
                         switch (task.getType()) {
-                            case TASK -> fb.taskGroup.put(task.getId(), task);
+                            case TASK -> {
+                                fb.taskGroup.put(task.getId(), task);
+                                if (task.getStartTime().isPresent()) {
+                                    fb.prioritizedTasks.add(task);
+                                }
+                            }
                             case EPIC_TASK -> fb.epicGroup.put(task.getId(), (EpicTask) task);
                             case SUB_TASK -> {
                                 sub = (SubTask) task;
                                 fb.subGroup.put(sub.getId(), sub);
                                 fb.epicGroup.get(sub.getEpicId()).addSubId(sub.getId());
+                                if (sub.getStartTime().isPresent()) {
+                                    fb.prioritizedTasks.add(sub);
+                                }
                             }
                         }
                     }

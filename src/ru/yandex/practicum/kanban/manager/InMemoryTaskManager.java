@@ -16,7 +16,7 @@ public class InMemoryTaskManager implements TaskManager {
     protected final Map<Integer, EpicTask> epicGroup;
     private final HistoryManager historyManager;
     private final Map<Integer, Boolean> timeLine; // 35040 интервалов по 15 мин в году
-    private final Set<Task> prioritizedTasks;
+    protected final Set<Task> prioritizedTasks;
     private final LocalDateTime timeLineStart; // старт планирования
     private static final Comparator<Task> compareStartTime = Comparator.comparing(Task::getStartTime,
             Comparator.comparing(startTime -> startTime.orElse(LocalDateTime.MIN)));
