@@ -1,6 +1,7 @@
 package ru.yandex.practicum.kanban.manager;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.kanban.task.EpicTask;
 import ru.yandex.practicum.kanban.task.StatusTask;
 import ru.yandex.practicum.kanban.task.SubTask;
@@ -84,12 +85,14 @@ public abstract class TaskManagerTest<T extends TaskManager> {
 
     // Тесты методов интерфейса TaskManager
 
+    @Test
     void addTask() {
         assertEquals(tasks, manager.getTaskGroup());
         assertEquals(subs, manager.getSubGroup());
         assertEquals(epics, manager.getEpicGroup());
     }
 
+    @Test
     void updateTask() {
         final String expectedTitle = "New title for task 1";
         final Task newTask = new Task();
@@ -105,6 +108,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(expectedTitle, actualTitle);
     }
 
+    @Test
     void getTask() {
         final List<Task> actual = Arrays.asList(manager.getTask(ID_TASK_1).orElse(null),
                 manager.getTask(ID_TASK_2).orElse(null));
@@ -112,6 +116,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(tasks, actual);
     }
 
+    @Test
     void getEpic() {
         final List<EpicTask> actual = Arrays.asList(manager.getEpic(ID_EPIC_1).orElse(null),
                 manager.getEpic(ID_EPIC_2).orElse(null));
@@ -119,6 +124,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(epics, actual);
     }
 
+    @Test
     void getSub() {
         final List<SubTask> actual = Arrays.asList(manager.getSub(ID_SUB_1_EPIC_1).orElse(null),
                 manager.getSub(ID_SUB_1_EPIC_2).orElse(null),
@@ -127,6 +133,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(subs, actual);
     }
 
+    @Test
     void getTaskGroup() {
         final List<Task> taskGroup = manager.getTaskGroup();
 
@@ -134,6 +141,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(tasks, taskGroup);
     }
 
+    @Test
     void getEpicGroup() {
         final List<EpicTask> epicGroup = manager.getEpicGroup();
 
@@ -141,6 +149,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(epics, epicGroup);
     }
 
+    @Test
     void getSubGroup() {
         final List<SubTask> subGroup = manager.getSubGroup();
 
@@ -148,42 +157,50 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(subs, subGroup);
     }
 
+    @Test
     void getEpicSubTasks() {
         assertEquals(List.of(sub1Epic1), manager.getEpicSubTasks(ID_EPIC_1));
         assertEquals(List.of(sub1Epic2, sub2Epic2), manager.getEpicSubTasks(ID_EPIC_2));
     }
 
+    @Test
     void getPrioritizedTasks() {
         // Должен вернуть список без эпиков, без task2 (т.к. он без установленного времени)
         assertEquals(List.of(task1, sub1Epic1, sub1Epic2, sub2Epic2), manager.getPrioritizedTasks());
     }
 
 
+    @Test
     void clearTaskGroup() {
         manager.clearTaskGroup();
         assertTrue(manager.getTaskGroup().isEmpty());
     }
 
+    @Test
     void clearSubGroup() {
         manager.clearSubGroup();
         assertTrue(manager.getSubGroup().isEmpty());
     }
 
+    @Test
     void clearEpicGroup() {
         manager.clearEpicGroup();
         assertTrue(manager.getEpicGroup().isEmpty());
     }
 
+    @Test
     void removeTask() {
         manager.removeTask(ID_TASK_1);
         assertEquals(List.of(task2), manager.getTaskGroup());
     }
 
+    @Test
     void removeSub() {
         manager.removeSub(ID_SUB_1_EPIC_1);
         assertEquals(List.of(sub1Epic2, sub2Epic2), manager.getSubGroup());
     }
 
+    @Test
     void removeEpic() {
         manager.removeEpic(ID_EPIC_1);
         assertEquals(List.of(epic2), manager.getEpicGroup());
@@ -193,12 +210,14 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     // Дополнительные тесты
 
     // Корректная итерация id
+    @Test
     void nextIdIsCorrect() {
         assertEquals(ID_TASK_1, manager.getTaskGroup().getFirst().getId());
         assertEquals(ID_TASK_2, manager.getTaskGroup().getLast().getId());
     }
 
     // Подзадача не добавляется в случае отсутствия связанного эпика
+    @Test
     void notAddSubIfMissingEpic() {
         final int nonExistentEpicId = 100;
 
@@ -207,6 +226,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Корректная связь между эпиком и подзадачами
+    @Test
     void linkBetweenSubAndEpicIsCorrect() {
         final List<Integer> expectedListIdSubs = List.of(ID_SUB_1_EPIC_2, ID_SUB_2_EPIC_2);
         final Optional<EpicTask> epic = manager.getEpic(ID_EPIC_2);
@@ -221,6 +241,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Статус всех новых задач NEW
+    @Test
     void statusShouldBeNewForNewTask() {
         assertTrue(manager.getTask(ID_TASK_1).isPresent());
         assertTrue(manager.getTask(ID_TASK_2).isPresent());
@@ -240,6 +261,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Статус эпика NEW: если нет подзадач или все они имеют статус NEW
+    @Test
     void statusShouldBeNewForEpic() {
         manager.updateTask(copyTaskWithNewStatus(sub1Epic1, StatusTask.DONE));
         manager.updateTask(copyTaskWithNewStatus(sub1Epic2, StatusTask.DONE));
@@ -263,6 +285,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Статус эпика DONE: если все подзадачи имеют статус DONE.
+    @Test
     void statusShouldBeDoneForEpic() {
         manager.updateTask(copyTaskWithNewStatus(sub1Epic1, StatusTask.DONE));
         manager.updateTask(copyTaskWithNewStatus(sub1Epic2, StatusTask.DONE));
@@ -276,6 +299,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Статус эпика IN_PROGRESS: если статусы подзадач различаются
+    @Test
     void statusShouldBeInProgressForEpic() {
         assertTrue(manager.getEpic(ID_EPIC_1).isPresent());
         assertTrue(manager.getEpic(ID_EPIC_2).isPresent());
@@ -294,6 +318,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть корректное обновление задачи
+    @Test
     void shouldBeCorrectUpdateTask() {
         final String newTitle = "New title";
         final String newDescription = "New description";
@@ -316,6 +341,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть корректное обновление эпика
+    @Test
     void shouldBeCorrectUpdateEpic() {
         final String newTitle = "New title";
         final String newDescription = "New description";
@@ -341,6 +367,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть корректное обновление подзадачи
+    @Test
     void shouldBeCorrectUpdateSub() {
         final String newTitle = "New title";
         final String newDescription = "New description";
@@ -366,6 +393,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть корректное время эпиков после добавления подзадач
+    @Test
     void shouldBeCorrectEpicTimesAfterAddSubs() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         // Epic 1 (1x Sub)
@@ -398,6 +426,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть корректное время эпика после обновления подзадачи
+    @Test
     void shouldBeCorrectEpicTimeAfterUpdateSub() {
         final int plusMin = 5;
         SubTask sub = new SubTask();
@@ -422,6 +451,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть корректное время эпиков после удаления подзадачи
+    @Test
     void shouldBeCorrectEpicTimesAfterRemoveSub() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         manager.removeSub(ID_SUB_2_EPIC_2);
@@ -441,6 +471,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть корректное время у эпиков после удаления всех подзадач
+    @Test
     void shouldBeCorrectEpicTimesAfterRemoveAllSubs() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         manager.removeSub(ID_SUB_1_EPIC_2);
@@ -455,6 +486,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должен быть корректный список приоритетных задач после удаления задачи
+    @Test
     void shouldBeCorrectPrioritizedTasksAfterRemoveTask() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         manager.removeTask(ID_TASK_1);
@@ -462,18 +494,21 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должен быть корректный список приоритетных задач после удаления подзадачи
+    @Test
     void shouldBeCorrectPrioritizedTasksAfterRemoveSub() {
         manager.removeSub(ID_SUB_1_EPIC_1);
         assertEquals(List.of(task1, sub1Epic2, sub2Epic2), manager.getPrioritizedTasks());
     }
 
     // Должен быть корректный список приоритетных задач после удаления эпика и его подзадач
+    @Test
     void shouldBeCorrectPrioritizedTasksAfterRemoveEpic() {
         manager.removeEpic(ID_EPIC_2);
         assertEquals(List.of(task1, sub1Epic1), manager.getPrioritizedTasks());
     }
 
     // Должно быть исключение валидации времени при добавлении задачи с наложением времени
+    @Test
     void shouldBeExceptionValidateTimeForAddOverlayTask() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         final Task newTask = new Task();
@@ -484,6 +519,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть исключение валидации времени при добавлении подзадачи с наложением времени
+    @Test
     void shouldBeExceptionValidateTimeForAddOverlaySub() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         final SubTask newSub = new SubTask(ID_EPIC_1);
@@ -497,6 +533,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
      * Не должно быть исключения валидации времени при добавлении эпика с наложением времени
      * При добавлении эпика все поля кроме title и description сбрасываются
      */
+    @Test
     void notShouldBeExceptionValidateTimeForAddOverlayEpic() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         final EpicTask newEpic = new EpicTask();
@@ -507,6 +544,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть исключение при обновлении задачи с наложением времени (без учета ее старого времени)
+    @Test
     void shouldBeExceptionValidateTimeForUpdateOverlayTask() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         final Task newTask = new Task();
@@ -518,6 +556,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть исключение при обновлении подзадачи с наложением времени (без учета ее старого времени)
+    @Test
     void shouldBeExceptionValidateTimeForUpdateOverlaySub() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         final SubTask newSub = new SubTask(ID_EPIC_1);
@@ -529,6 +568,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Не должно быть исключения при обновлении эпика с наложением времени (обновляется только title и description)
+    @Test
     void notShouldBeExceptionValidateTimeForUpdateOverlayEpic() {
         // START + 0m <task1 - 15m> ... 30m <sub1Epic1 - 15m> ... 60m <sub1Epic2 - 15m> ... 90m <sub2Epic2 - 30m> 120m
         final EpicTask newEpic = new EpicTask();
@@ -540,6 +580,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     // Должно быть исключение при выходе за границы интервалов
+    @Test
     void shouldBeExceptionOutOfRangeLeftIntervals() {
         final Task leftRangeTask = new Task();
         leftRangeTask.setStartTime(startTimeGeneral.minusDays(1));
