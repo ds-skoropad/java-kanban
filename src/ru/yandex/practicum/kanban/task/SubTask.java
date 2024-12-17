@@ -1,23 +1,43 @@
 package ru.yandex.practicum.kanban.task;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 public class SubTask extends Task {
-    protected int epicTaskId;
+    protected int epicId;
 
-    public SubTask(String title, String description) {
+    public SubTask(int epicId, String title, String description, int id, StatusTask status, Duration duration,
+                   LocalDateTime startTime) {
+        super(title, description, id, status, duration, startTime);
+        this.epicId = epicId;
+    }
+
+    public SubTask(int epicId, String title, String description, int id) {
+        super(title, description, id);
+        this.epicId = epicId;
+    }
+
+    public SubTask(int epicId, String title, String description) {
         super(title, description);
+        this.epicId = epicId;
     }
 
-    public SubTask(String title, String description, int id, StatusTask status, int epicTaskId) {
-        super(title, description, id, status);
-        this.epicTaskId = epicTaskId;
+    public SubTask(int epicId) {
+        super();
+        this.epicId = epicId;
     }
 
-    public int getEpicTaskId() {
-        return epicTaskId;
+    public SubTask() {
+        super();
+        this.epicId = 0;
     }
 
-    public void setEpicTaskId(int epicTaskId) {
-        this.epicTaskId = epicTaskId;
+    public int getEpicId() {
+        return epicId;
+    }
+
+    public void setEpicId(int epicId) {
+        this.epicId = epicId;
     }
 
     @Override
@@ -27,12 +47,14 @@ public class SubTask extends Task {
 
     @Override
     public String toString() {
-        return "SubTask{" +
+        return "Sub{" +
                 "title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", id=" + id +
                 ", status=" + status +
-                ", epicTaskId=" + epicTaskId +
+                ", startTime=" + startTime +
+                ", duration=" + duration +
+                ", epicId=" + epicId +
                 '}';
     }
 }

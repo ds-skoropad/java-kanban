@@ -5,79 +5,90 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.kanban.task.StatusTask;
 import ru.yandex.practicum.kanban.task.Task;
 
+import java.time.Duration;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class InMemoryHistoryManagerTest {
-
-    private HistoryManager historyManager;
-    private Task task1;
-    private Task task2;
-    private Task task3;
+public class InMemoryHistoryManagerTest {
+    HistoryManager manager;
+    Task task1;
+    Task task2;
+    Task task3;
+    final int ID_TASK_1 = 1;
+    final int ID_TASK_2 = 2;
+    final int ID_TASK_3 = 3;
 
     @BeforeEach
-    public void beforeEach() {
-        historyManager = new InMemoryHistoryManager();
-        task1 = new Task("Title task 1", "Description task 1", 1, StatusTask.NEW);
-        task2 = new Task("Title task 2", "Description task 2", 2, StatusTask.NEW);
-        task3 = new Task("Title task 3", "Description task 3", 3, StatusTask.NEW);
-        historyManager.add(task1);
-        historyManager.add(task2);
-        historyManager.add(task3);
-
+    void beforeEach() {
+        this.manager = Managers.getDefaultHistory();
+        task1 = new Task("", "", ID_TASK_1, StatusTask.NEW, Duration.ZERO, null);
+        task2 = new Task("", "", ID_TASK_2, StatusTask.NEW, Duration.ZERO, null);
+        task3 = new Task("", "", ID_TASK_3, StatusTask.NEW, Duration.ZERO, null);
+        manager.add(task1);
+        manager.add(task2);
+        manager.add(task3);
     }
 
     @Test
-    public void add() { // Тест метода добаления
-        assertEquals(List.of(task1, task2, task3), historyManager.getHistoryList());
+    void add() {
+        assertEquals(List.of(task1, task2, task3), manager.getHistoryList());
     }
 
     @Test
-    public void remove() { // Тест метода удаления
-        historyManager.remove(1);
-        assertEquals(List.of(task2, task3), historyManager.getHistoryList());
-
-        historyManager.remove(2);
-        assertEquals(List.of(task3), historyManager.getHistoryList());
-
-        historyManager.remove(3);
-        assertTrue(historyManager.getHistoryList().isEmpty());
+    void remove() {
+        manager.remove(ID_TASK_1);
+        assertEquals(List.of(task2, task3), manager.getHistoryList());
     }
 
     @Test
-    public void removeFirst() { // Тест на удаление первого элемента
-        historyManager.remove(1);
-        assertEquals(List.of(task2, task3), historyManager.getHistoryList());
+    void shouldBeEmptyIfRemoveAll() {
+        manager.remove(ID_TASK_1);
+        manager.remove(ID_TASK_2);
+        manager.remove(ID_TASK_3);
+        assertTrue(manager.getHistoryList().isEmpty());
     }
 
     @Test
-    public void removeMiddle() { // Тест на удаление среднего элемента
-        historyManager.remove(2);
-        assertEquals(List.of(task1, task3), historyManager.getHistoryList());
+    void shouldBeNoDuplicates() {
+        manager.add(new Task("", "", ID_TASK_3, StatusTask.NEW, Duration.ZERO, null));
+        assertEquals(List.of(task1, task2, task3), manager.getHistoryList());
     }
 
     @Test
-    public void removeLast() { // Тест на удаление последнего элемента
-        historyManager.remove(3);
-        assertEquals(List.of(task1, task2), historyManager.getHistoryList());
+    void shouldBeCorrectRemoveFirst() {
+        manager.remove(ID_TASK_1);
+        assertEquals(List.of(task2, task3), manager.getHistoryList());
     }
 
     @Test
-    public void updateFirst() { // Тест на обновление первого элемента
-        historyManager.add(new Task("Title task 1", "Description task 1", 1, StatusTask.NEW));
-        assertEquals(List.of(task2, task3, task1), historyManager.getHistoryList());
+    void shouldBeCorrectRemoveMiddle() {
+        manager.remove(ID_TASK_2);
+        assertEquals(List.of(task1, task3), manager.getHistoryList());
     }
 
     @Test
-    public void updateMiddle() { // Тест на обновление среднего элемента
-        historyManager.add(new Task("Title task 2", "Description task 2", 2, StatusTask.NEW));
-        assertEquals(List.of(task1, task3, task2), historyManager.getHistoryList());
+    void shouldBeCorrectRemoveLast() {
+        manager.remove(ID_TASK_3);
+        assertEquals(List.of(task1, task2), manager.getHistoryList());
     }
 
     @Test
-    public void updateLast() { // Тест на обновление последнего элемента
-        historyManager.add(new Task("Title task 3", "Description task 3", 3, StatusTask.NEW));
-        assertEquals(List.of(task1, task2, task3), historyManager.getHistoryList());
+    void shouldBeCorrectUpdateFirst() {
+        manager.add(new Task("", "", ID_TASK_1, StatusTask.NEW, Duration.ZERO, null));
+        assertEquals(List.of(task2, task3, task1), manager.getHistoryList());
+    }
+
+    @Test
+    void shouldBeCorrectUpdateMiddle() {
+        manager.add(new Task("", "", ID_TASK_2, StatusTask.NEW, Duration.ZERO, null));
+        assertEquals(List.of(task1, task3, task2), manager.getHistoryList());
+    }
+
+    @Test
+    void shouldBeCorrectUpdateLast() {
+        manager.add(new Task("", "", ID_TASK_3, StatusTask.NEW, Duration.ZERO, null));
+        assertEquals(List.of(task1, task2, task3), manager.getHistoryList());
     }
 }

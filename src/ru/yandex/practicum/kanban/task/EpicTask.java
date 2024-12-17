@@ -1,38 +1,62 @@
 package ru.yandex.practicum.kanban.task;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class EpicTask extends Task {
-    protected List<Integer> subTaskIds;
+    protected List<Integer> subIds;
+    protected LocalDateTime endTime;
+
+    public EpicTask(String title, String description, int id, StatusTask status,
+                    Duration duration, LocalDateTime startTime, List<Integer> subIds) {
+        super(title, description, id, status, duration, startTime);
+        this.subIds = subIds;
+    }
+
+    public EpicTask(String title, String description, int id) {
+        super(title, description, id);
+        this.subIds = new ArrayList<>();
+    }
 
     public EpicTask(String title, String description) {
         super(title, description);
-        this.subTaskIds = new ArrayList<>();
+        this.subIds = new ArrayList<>();
     }
 
-    public EpicTask(String title, String description, int id, StatusTask status, List<Integer> subTaskIds) {
-        super(title, description, id, status);
-        this.subTaskIds = subTaskIds;
+    public EpicTask() {
+        super();
+        this.subIds = new ArrayList<>();
     }
 
-    public List<Integer> getSubTaskIds() {
-        return subTaskIds;
+    public List<Integer> getSubIds() {
+        return subIds;
     }
 
-    public void setSubTaskIds(List<Integer> subTaskIds) {
-        this.subTaskIds = subTaskIds;
+    public void setSubIds(List<Integer> subIds) {
+        this.subIds = subIds;
     }
 
-    public boolean addSubTaskId(int id) {
-        if (subTaskIds.contains(id)) {
+    public boolean addSubId(int id) {
+        if (subIds.contains(id)) {
             return false;
         }
-        return subTaskIds.add(id);
+        return subIds.add(id);
     }
 
-    public boolean removeSubTaskId(Integer id) {
-        return subTaskIds.remove(id); //
+    public boolean removeSubId(Integer id) {
+        return subIds.remove(id); //
+    }
+
+    @Override
+    public Optional<LocalDateTime> getEndTime() {
+        return Optional.ofNullable(endTime);
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
     }
 
     @Override
@@ -42,12 +66,14 @@ public class EpicTask extends Task {
 
     @Override
     public String toString() {
-        return "EpicTask{" +
+        return "Epic{" +
                 "title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", id=" + id +
                 ", status=" + status +
-                ", subTaskIds=" + subTaskIds +
+                ", startTime=" + startTime +
+                ", duration=" + duration +
+                ", subIds=" + subIds +
                 '}';
     }
 }

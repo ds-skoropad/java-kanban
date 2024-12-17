@@ -2,282 +2,391 @@ package ru.yandex.practicum.kanban.manager;
 
 import ru.yandex.practicum.kanban.task.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class InMemoryTaskManager implements TaskManager {
     protected final Map<Integer, Task> taskGroup;
-    protected final Map<Integer, SubTask> subTaskGroup;
-    protected final Map<Integer, EpicTask> epicTaskGroup;
-    private HistoryManager historyManager;
+    protected final Map<Integer, SubTask> subGroup;
+    protected final Map<Integer, EpicTask> epicGroup;
+    private final HistoryManager historyManager;
+    private final Map<Integer, Boolean> timeLine; // 35040 интервалов по 15 мин в году
+    protected final Set<Task> prioritizedTasks;
+    private final LocalDateTime timeLineStart; // старт планирования
+    private static final Comparator<Task> compareStartTime = Comparator.comparing(Task::getStartTime,
+            Comparator.comparing(startTime -> startTime.orElse(LocalDateTime.MIN)));
+    private static final int TIME_LINE_DAYS = 365;
+    private static final int MINUTE_INTERVAL = 15;
+    private static final int MAX_INTERVALS = TIME_LINE_DAYS * 24 * 60 / MINUTE_INTERVAL;
     protected int nextId;
 
     public InMemoryTaskManager() {
         this.taskGroup = new HashMap<>();
-        this.subTaskGroup = new HashMap<>();
-        this.epicTaskGroup = new HashMap<>();
+        this.subGroup = new HashMap<>();
+        this.epicGroup = new HashMap<>();
+        historyManager = Managers.getDefaultHistory();
+        this.timeLineStart = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0));
+        this.prioritizedTasks = new TreeSet<>(compareStartTime);
         this.nextId = 1;
+        this.timeLine = IntStream.rangeClosed(1, MAX_INTERVALS)
+                .boxed()
+                .collect(Collectors.toMap(
+                        i -> i,
+                        i -> false));
     }
 
-    public InMemoryTaskManager(HistoryManager historyManager) {
-        this.taskGroup = new HashMap<>();
-        this.subTaskGroup = new HashMap<>();
-        this.epicTaskGroup = new HashMap<>();
-        this.historyManager = historyManager;
-        this.nextId = 1;
-    }
-
-    public void setHistoryManager(HistoryManager historyManager) {
-        this.historyManager = historyManager;
-    }
-
-    // ТЗ 2-с: Получение по идентификатору.
     @Override
-    public Task getTask(int id) {
-        Task task = taskGroup.get(id);
+    public Optional<Task> getTask(int id) {
+        Optional<Task> task = Optional.ofNullable(taskGroup.get(id));
 
-        if (historyManager != null) {
-            historyManager.add(task);
-        }
+        task.ifPresent(historyManager::add);
         return task;
     }
 
     @Override
-    public SubTask getSubTask(int id) {
-        SubTask subTask = subTaskGroup.get(id);
+    public Optional<SubTask> getSub(int id) {
+        Optional<SubTask> sub = Optional.ofNullable(subGroup.get(id));
 
-        if (historyManager != null) {
-            historyManager.add(subTask);
-        }
-        return subTask;
+        sub.ifPresent(historyManager::add);
+        return sub;
     }
 
     @Override
-    public EpicTask getEpicTask(int id) {
-        EpicTask epicTask = epicTaskGroup.get(id);
+    public Optional<EpicTask> getEpic(int id) {
+        Optional<EpicTask> epic = Optional.ofNullable(epicGroup.get(id));
 
-        if (historyManager != null) {
-            historyManager.add(epicTask);
-        }
-        return epicTask;
+        epic.ifPresent(historyManager::add);
+        return epic;
     }
 
-    // ТЗ 2-a: Получение списка всех задач.
     @Override
     public List<Task> getTaskGroup() {
         return new ArrayList<>(taskGroup.values());
     }
 
     @Override
-    public List<SubTask> getSubTaskGroup() {
-        return new ArrayList<>(subTaskGroup.values());
+    public List<SubTask> getSubGroup() {
+        return new ArrayList<>(subGroup.values());
     }
 
     @Override
-    public List<EpicTask> getEpicTaskGroup() {
-        return new ArrayList<>(epicTaskGroup.values());
+    public List<EpicTask> getEpicGroup() {
+        return new ArrayList<>(epicGroup.values());
     }
 
-    // ТЗ 3-а: Получение списка всех подзадач определённого эпика.
     @Override
-    public List<SubTask> getSubTaskGroupFromEpic(int epicTaskId) {
-        List<SubTask> resultGroup = new ArrayList<>();
-        EpicTask epicTask = epicTaskGroup.get(epicTaskId);
-
-        if (epicTask != null) {
-            for (int subTaskId : epicTask.getSubTaskIds()) {
-                if (subTaskGroup.containsKey(subTaskId)) {
-                    resultGroup.add(subTaskGroup.get(subTaskId));
-                }
-            }
-        }
-        return resultGroup;
+    public List<SubTask> getEpicSubTasks(int epicId) {
+        EpicTask epic = epicGroup.get(epicId);
+        return (epic == null) ? new ArrayList<>() : epic.getSubIds().stream()
+                .filter(subGroup::containsKey)
+                .map(subGroup::get)
+                .collect(Collectors.toList());
     }
 
-    // ТЗ 2-d: Создание. Сам объект должен передаваться в качестве параметра.
     @Override
-    public int addTask(Task task) {  // Исправлено!
+    public List<Task> getPrioritizedTasks() {
+        return new ArrayList<>(prioritizedTasks);
+    }
+
+    @Override
+    public int addTask(Task task) {
         if (task == null) return 0;
-        int id;
 
+        task.setId(nextId);
         switch (task.getType()) {
             case SUB_TASK -> {
-                SubTask subTask = (SubTask) task;
-                int epicId = subTask.getEpicTaskId();
+                SubTask sub = (SubTask) task;
+                EpicTask epic = epicGroup.get(sub.getEpicId());
 
-                if (epicTaskGroup.get(epicId) == null) {
+                if (epic == null) {
                     return 0;
                 }
 
-                id = nextId++;
-                subTask.setId(id);
-                subTaskGroup.put(id, subTask);
-                epicTaskGroup.get(epicId).addSubTaskId(id);
-                updateStatusEpicTask(epicId);
+                prioritizedTasksAdd(task);
+                subGroup.put(nextId, sub);
+                epic.addSubId(nextId);
+                updateStatusEpicTask(epic.getId());
+
+                // Вычисление времени эпика. Экономия вызова updateTimeEpicTask()
+                if (sub.getStartTime().isPresent() && sub.getEndTime().isPresent()) {
+                    if (epic.getStartTime().isEmpty() ||
+                            epic.getStartTime().get().isAfter(sub.getStartTime().get())) {
+                        epic.setStartTime(sub.getStartTime().get());
+                    }
+                    if (epic.getEndTime().isEmpty() || epic.getEndTime().get().isBefore(sub.getEndTime().get())) {
+                        epic.setEndTime(sub.getEndTime().get());
+                    }
+                }
+                // Продолжительность эпика это продолжительность всех подзадач, даже если нет времени начала у подзадачи
+                epic.setDuration(epic.getDuration().plus(sub.getDuration()));
             }
-            case EPIC_TASK -> {
-                id = nextId++;
-                EpicTask epicTask = (EpicTask) task;
-                epicTask.setId(id);
-                epicTaskGroup.put(id, epicTask);
-            }
-            default -> { // TASK
-                id = nextId++;
-                task.setId(id);
-                taskGroup.put(id, task);
+            case EPIC_TASK -> epicGroup.put(nextId, new EpicTask(task.getTitle(), task.getDescription(), nextId));
+            case TASK -> {
+                prioritizedTasksAdd(task);
+                taskGroup.put(nextId, task);
             }
         }
-        return id;
+        return ++nextId;
     }
 
-    // ТЗ 2-е: Обновление. Новая версия объекта с верным идентификатором передаётся в виде параметра.
     @Override
     public boolean updateTask(Task task) {
         if (task == null) return false;
-        int id = task.getId();
 
+        int id = task.getId();
         switch (task.getType()) {
             case SUB_TASK -> {
-                if (!subTaskGroup.containsKey(id)) return false;
+                if (!subGroup.containsKey(id)) return false;
 
-                SubTask subTask = (SubTask) task;
-                SubTask subTaskOriginal = subTaskGroup.get(id);
-                subTaskOriginal.setTitle(subTask.getTitle());
-                subTaskOriginal.setDescription(subTask.getDescription());
+                prioritizedTasksUpdate(task);
+                SubTask subNew = (SubTask) task;
+                SubTask subCurrent = subGroup.get(id);
+                EpicTask epic = epicGroup.get(subCurrent.getEpicId());
 
-                if (subTaskOriginal.getStatus() != subTask.getStatus()) { // Если статус изменился
-                    subTaskOriginal.setStatus(subTask.getStatus());
-                    updateStatusEpicTask(subTaskOriginal.getEpicTaskId());
+                subCurrent.setTitle(subNew.getTitle());
+                subCurrent.setDescription(subNew.getDescription());
+
+                if (subCurrent.getStatus() != subNew.getStatus()) { // Экономия вызова updateStatusEpicTask
+                    subCurrent.setStatus(subNew.getStatus());
+                    updateStatusEpicTask(subCurrent.getEpicId());
                 }
+
+                subCurrent.setStartTime(subNew.getStartTime().orElse(null));
+                subCurrent.setDuration(subNew.getDuration());
+                updateTimeEpicTask(epic.getId()); // Пересчет эпика time & duration
             }
             case EPIC_TASK -> {
-                if (!epicTaskGroup.containsKey(id)) return false;
+                if (!epicGroup.containsKey(id)) return false;
 
-                EpicTask epicTask = (EpicTask) task;
-                EpicTask epicTaskOriginal = epicTaskGroup.get(id);
-                epicTaskOriginal.setTitle(epicTask.getTitle());
-                epicTaskOriginal.setDescription(epicTask.getDescription());
+                EpicTask epicNew = (EpicTask) task;
+                EpicTask epicCurrent = epicGroup.get(id);
+                epicCurrent.setTitle(epicNew.getTitle());
+                epicCurrent.setDescription(epicNew.getDescription());
             }
-            default -> { // TASK
+            case TASK -> {
                 if (!taskGroup.containsKey(id)) return false;
+
+                prioritizedTasksUpdate(task);
                 taskGroup.put(task.getId(), task);
             }
         }
         return true;
     }
 
-    // ТЗ 2-b: Удаление всех задач.
     @Override
     public void clearTaskGroup() {
-        for (int id : taskGroup.keySet()) {
-            historyManager.remove(id);
-        }
+        taskGroup.values().forEach(this::prioritizedTasksRemove);
+        taskGroup.keySet().forEach(historyManager::remove);
         taskGroup.clear();
     }
 
     @Override
-    public void clearSubTaskGroup() {
-        for (int id : subTaskGroup.keySet()) {
-            historyManager.remove(id);
-        }
-        subTaskGroup.clear();
+    public void clearSubGroup() {
+        subGroup.values().forEach(this::prioritizedTasksRemove);
+        subGroup.keySet().forEach(historyManager::remove);
+        subGroup.clear();
 
-        for (EpicTask epicTask : epicTaskGroup.values()) {
-            epicTask.getSubTaskIds().clear();
-            epicTask.setStatus(StatusTask.NEW);
+        for (EpicTask epic : epicGroup.values()) {
+            epic.setStatus(StatusTask.NEW);
+            epic.getSubIds().clear();
         }
     }
 
     @Override
-    public void clearEpicTaskGroup() {
-        for (int id : subTaskGroup.keySet()) {
-            historyManager.remove(id);
-        }
-        subTaskGroup.clear();
+    public void clearEpicGroup() {
+        subGroup.values().forEach(this::prioritizedTasksRemove);
+        subGroup.keySet().forEach(historyManager::remove);
+        subGroup.clear();
 
-        for (int id : epicTaskGroup.keySet()) {
-            historyManager.remove(id);
-        }
-        epicTaskGroup.clear();
+        epicGroup.keySet().forEach(historyManager::remove);
+        epicGroup.clear();
     }
 
-    // ТЗ 2-f: Удаление по идентификатору.
     @Override
     public boolean removeTask(int id) {
         if (!taskGroup.containsKey(id)) {
             return false;
         }
 
+        prioritizedTasksRemove(taskGroup.get(id));
         taskGroup.remove(id);
         historyManager.remove(id);
         return true;
     }
 
     @Override
-    public boolean removeSubTask(int id) {
-        if (!subTaskGroup.containsKey(id)) {
+    public boolean removeSub(int id) {
+        if (!subGroup.containsKey(id)) {
             return false;
         }
 
-        int epicId = subTaskGroup.get(id).getEpicTaskId();
-        epicTaskGroup.get(epicId).removeSubTaskId(id);
-        subTaskGroup.remove(id);
         historyManager.remove(id);
+        prioritizedTasksRemove(subGroup.get(id));
+
+        int epicId = subGroup.get(id).getEpicId();
+        epicGroup.get(epicId).removeSubId(id);
+        subGroup.remove(id);
         updateStatusEpicTask(epicId);
+        updateTimeEpicTask(epicId);
         return true;
     }
 
     @Override
-    public boolean removeEpicTask(int id) {
-        if (!epicTaskGroup.containsKey(id)) {
+    public boolean removeEpic(int id) {
+        if (!epicGroup.containsKey(id)) {
             return false;
         }
 
-        for (Integer subTaskId : epicTaskGroup.get(id).getSubTaskIds()) {
-            subTaskGroup.remove(subTaskId);
-            historyManager.remove(subTaskId);
+        for (int subId : epicGroup.get(id).getSubIds()) {
+            historyManager.remove(subId);
+            prioritizedTasksRemove(subGroup.get(subId));
+            subGroup.remove(subId);
         }
-        epicTaskGroup.remove(id);
         historyManager.remove(id);
+        epicGroup.remove(id);
         return true;
     }
 
     private void updateStatusEpicTask(int id) {
-        EpicTask epicTask = epicTaskGroup.get(id);
+        EpicTask epic = epicGroup.get(id);
 
-        if (epicTask == null) {
-            return;
-        }
-        if (epicTask.getSubTaskIds().isEmpty()) {
-            epicTask.setStatus(StatusTask.NEW);
-            return;
-        }
+        if (epic == null) return;
 
-        boolean isAllNew = true;
-        boolean isAllDone = true;
-
-        for (Integer subTaskId : epicTask.getSubTaskIds()) {
-            switch (subTaskGroup.get(subTaskId).getStatus()) {
-                case NEW -> isAllDone = false;
-                case DONE -> isAllNew = false;
-                default -> {
-                    isAllDone = false;
-                    isAllNew = false;
-                }
-            }
-            if (!isAllDone && !isAllNew) {
-                break;
-            }
-        }
-        if (isAllNew) {
-            epicTask.setStatus(StatusTask.NEW);
-        } else if (isAllDone) {
-            epicTask.setStatus(StatusTask.DONE);
+        if (epic.getSubIds().isEmpty()) {
+            epic.setStatus(StatusTask.NEW);
         } else {
-            epicTask.setStatus(StatusTask.IN_PROGRESS);
+            List<SubTask> subs = getEpicSubTasks(id);
+            StatusTask firstStatus = subs.getFirst().getStatus();
+            epic.setStatus(subs.stream().anyMatch(sub -> sub.getStatus() != firstStatus) ?
+                    StatusTask.IN_PROGRESS : firstStatus);
         }
     }
-}
 
+    private void updateTimeEpicTask(int id) {
+        EpicTask epic = epicGroup.get(id);
+        Duration duration = Duration.ZERO;
+
+        epic.setStartTime(null);
+        epic.setEndTime(null);
+        for (SubTask sub : getEpicSubTasks(id)) {
+            // startTime
+            if ((epic.getStartTime().isEmpty() && sub.getStartTime().isPresent()) ||
+                    (epic.getStartTime().isPresent() && sub.getStartTime().isPresent() &&
+                            epic.getStartTime().get().isAfter(sub.getStartTime().get()))) {
+                epic.setStartTime(sub.getStartTime().get());
+            }
+            // endTime
+            if ((epic.getEndTime().isEmpty() && sub.getEndTime().isPresent()) ||
+                    (epic.getEndTime().isPresent() && sub.getEndTime().isPresent() &&
+                            epic.getEndTime().get().isBefore(sub.getEndTime().get()))) {
+                epic.setEndTime(sub.getEndTime().get());
+            }
+            duration = duration.plus(sub.getDuration());
+        }
+        epic.setDuration(duration);
+    }
+
+    // Метод пересечения двух задач (решение до интервального планирования)
+    private boolean overlayTasks(Task taskA, Task taskB) {
+        if (taskA == null || taskB == null) return false;
+
+        LocalDateTime startA = taskA.getStartTime().orElse(null);
+        LocalDateTime endA = taskA.getEndTime().orElse(null);
+        LocalDateTime startB = taskB.getStartTime().orElse(null);
+        LocalDateTime endB = taskB.getEndTime().orElse(null);
+
+        if (startA == null || endA == null) return false;
+
+        return startA.isBefore(endB) && endA.isAfter(startB);
+    }
+
+    // Проверка пересечения времени со всеми задачами (решение до интервального планирования)
+    private boolean overlayPrioritizedTasks(Task task) {
+        return getPrioritizedTasks().stream()
+                // Без учета ее текущего времени в списке (если вызов с updateTask значит она есть)
+                .filter(t -> !t.equals(task))
+                .anyMatch(t -> overlayTasks(t, task));
+    }
+
+    // Методы дополнительного задания по интервальному планированию
+
+    // Возвращает список номеров интервалов, на которых расположена задача
+    private List<Integer> getTaskIntervals(Task task) {
+        if (task.getStartTime().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        LocalDateTime startTime = task.getStartTime().get();
+        LocalDateTime endTime = startTime.plus(task.getDuration());
+
+        // Проверка на выход за границы линии интервалов (в 1 год)
+        if (startTime.isBefore(timeLineStart) || endTime.isAfter(timeLineStart.plusYears(1))) {
+            throw new ManagerSaveException("Out of range intervals");
+        }
+
+        int startInterval = (int) Duration.between(timeLineStart, startTime).toMinutes() / MINUTE_INTERVAL + 1;
+        int endInterval = (int) Duration.between(timeLineStart, endTime).toMinutes() / MINUTE_INTERVAL;
+
+        return IntStream.rangeClosed(startInterval, endInterval)
+                .boxed()
+                .toList();
+    }
+
+    // Проверяет интервалы задачи по мапе timeLine
+    private boolean overlayPrioritizedTasksInterval(Task task) {
+        if (task == null) return false;
+        if (task.getStartTime().isEmpty()) return false;
+
+        List<Integer> taskIntervals = getTaskIntervals(task);
+
+        // При обновлении задачи ее старые интервалы не учитываются, т.к. после обновления они будут заменены на новые
+        Task currentTask = (task.getType() == TypeTask.TASK) ? taskGroup.get(task.getId()) : subGroup.get(task.getId());
+        if (currentTask != null) {
+            // Обновление задачи. Старые интервалы обновляемой задачи в приоритетном списке в учет не берутся.
+            List<Integer> currentInterval = getTaskIntervals(currentTask);
+            taskIntervals = taskIntervals.stream()
+                    .filter(i -> !currentInterval.contains(i))
+                    .toList();
+        }
+        return taskIntervals.stream().anyMatch(timeLine::get);
+    }
+
+    // Методы для приоритетного списка
+
+    private void prioritizedTasksAdd(Task task) {
+        if (task.getStartTime().isEmpty()) return;
+
+        if (overlayPrioritizedTasksInterval(task)) {
+            throw new ManagerSaveException("startTime overlay");
+        }
+
+        getTaskIntervals(task).forEach(i -> timeLine.put(i, true));
+        prioritizedTasks.add(task);
+    }
+
+    private void prioritizedTasksUpdate(Task task) {
+        if (task.getStartTime().isEmpty()) return;
+
+        if (overlayPrioritizedTasksInterval(task)) {
+            throw new ManagerSaveException("startTime overlay");
+        }
+        // Сначала обработать старые интервалы обновляемой задачи
+        Task currentTask = (task.getType() == TypeTask.TASK) ? taskGroup.get(task.getId()) : subGroup.get(task.getId());
+        if (currentTask != null) {
+            getTaskIntervals(currentTask).forEach(i -> timeLine.put(i, false));
+        }
+        // Обновляем интервалы и добавляем новую задачу в приоритетный список
+        getTaskIntervals(task).forEach(i -> timeLine.put(i, true));
+        prioritizedTasks.add(task);
+    }
+
+    private void prioritizedTasksRemove(Task task) {
+        getTaskIntervals(task).forEach(i -> timeLine.put(i, false));
+        prioritizedTasks.remove(task);
+    }
+}
