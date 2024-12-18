@@ -169,6 +169,13 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(List.of(task1, sub1Epic1, sub1Epic2, sub2Epic2), manager.getPrioritizedTasks());
     }
 
+    @Test
+    void getHistory() {
+        manager.getTask(ID_TASK_1);
+        manager.getSub(ID_SUB_1_EPIC_1);
+
+        assertEquals(List.of(task1, sub1Epic1), manager.getHistory());
+    }
 
     @Test
     void clearTaskGroup() {
@@ -515,7 +522,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         newTask.setStartTime(startTimeGeneral.plusMinutes(SUB_1_EPIC_1_START));
         newTask.setDuration(Duration.ofMinutes(SUB_1_EPIC_1_DURATION));
 
-        Assertions.assertThrows(ManagerSaveException.class, () -> manager.addTask(newTask));
+        Assertions.assertThrows(ManagerOverlayTaskException.class, () -> manager.addTask(newTask));
     }
 
     // Должно быть исключение валидации времени при добавлении подзадачи с наложением времени
@@ -526,7 +533,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         newSub.setStartTime(startTimeGeneral.plusMinutes(TASK_1_START));
         newSub.setDuration(Duration.ofMinutes(TASK1_DURATION));
 
-        Assertions.assertThrows(ManagerSaveException.class, () -> manager.addTask(newSub));
+        Assertions.assertThrows(ManagerOverlayTaskException.class, () -> manager.addTask(newSub));
     }
 
     /*
@@ -552,7 +559,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         newTask.setStartTime(startTimeGeneral.plusMinutes(SUB_1_EPIC_1_START));
         newTask.setDuration(Duration.ofMinutes(SUB_1_EPIC_1_DURATION));
 
-        Assertions.assertThrows(ManagerSaveException.class, () -> manager.updateTask(newTask));
+        Assertions.assertThrows(ManagerOverlayTaskException.class, () -> manager.updateTask(newTask));
     }
 
     // Должно быть исключение при обновлении подзадачи с наложением времени (без учета ее старого времени)
@@ -564,7 +571,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         newSub.setStartTime(startTimeGeneral.plusMinutes(TASK_1_START));
         newSub.setDuration(Duration.ofMinutes(TASK1_DURATION));
 
-        Assertions.assertThrows(ManagerSaveException.class, () -> manager.updateTask(newSub));
+        Assertions.assertThrows(ManagerOverlayTaskException.class, () -> manager.updateTask(newSub));
     }
 
     // Не должно быть исключения при обновлении эпика с наложением времени (обновляется только title и description)
@@ -586,13 +593,13 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         leftRangeTask.setStartTime(startTimeGeneral.minusDays(1));
         leftRangeTask.setDuration(Duration.ofMinutes(TASK1_DURATION));
 
-        Assertions.assertThrows(ManagerSaveException.class, () -> manager.addTask(leftRangeTask));
+        Assertions.assertThrows(ManagerOverlayTaskException.class, () -> manager.addTask(leftRangeTask));
 
         final Task rightRangeTask = new Task();
         rightRangeTask.setStartTime(startTimeGeneral.plusYears(1));
         rightRangeTask.setDuration(Duration.ofMinutes(TASK1_DURATION));
 
-        Assertions.assertThrows(ManagerSaveException.class, () -> manager.addTask(rightRangeTask));
+        Assertions.assertThrows(ManagerOverlayTaskException.class, () -> manager.addTask(rightRangeTask));
     }
 
     // Вспомогательный метод для тестов: возвращает копию задачи с измененным статусом
