@@ -29,7 +29,7 @@ public class InMemoryTaskManager implements TaskManager {
         this.taskGroup = new HashMap<>();
         this.subGroup = new HashMap<>();
         this.epicGroup = new HashMap<>();
-        historyManager = Managers.getDefaultHistory();
+        this.historyManager = Managers.getDefaultHistory();
         this.timeLineStart = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0));
         this.prioritizedTasks = new TreeSet<>(compareStartTime);
         this.nextId = 1;
@@ -91,6 +91,11 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public List<Task> getPrioritizedTasks() {
         return new ArrayList<>(prioritizedTasks);
+    }
+
+    @Override
+    public List<Task> getHistory() {
+        return new ArrayList<>(historyManager.getHistoryList());
     }
 
     @Override
@@ -326,7 +331,7 @@ public class InMemoryTaskManager implements TaskManager {
 
         // Проверка на выход за границы линии интервалов (в 1 год)
         if (startTime.isBefore(timeLineStart) || endTime.isAfter(timeLineStart.plusYears(1))) {
-            throw new ManagerSaveException("Out of range intervals");
+            throw new ManagerOverlayTaskException("Out of range intervals");
         }
 
         int startInterval = (int) Duration.between(timeLineStart, startTime).toMinutes() / MINUTE_INTERVAL + 1;
@@ -362,7 +367,7 @@ public class InMemoryTaskManager implements TaskManager {
         if (task.getStartTime().isEmpty()) return;
 
         if (overlayPrioritizedTasksInterval(task)) {
-            throw new ManagerSaveException("startTime overlay");
+            throw new ManagerOverlayTaskException("startTime overlay");
         }
 
         getTaskIntervals(task).forEach(i -> timeLine.put(i, true));
@@ -373,7 +378,7 @@ public class InMemoryTaskManager implements TaskManager {
         if (task.getStartTime().isEmpty()) return;
 
         if (overlayPrioritizedTasksInterval(task)) {
-            throw new ManagerSaveException("startTime overlay");
+            throw new ManagerOverlayTaskException("startTime overlay");
         }
         // Сначала обработать старые интервалы обновляемой задачи
         Task currentTask = (task.getType() == TypeTask.TASK) ? taskGroup.get(task.getId()) : subGroup.get(task.getId());
