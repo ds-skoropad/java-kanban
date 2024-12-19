@@ -9,7 +9,6 @@ import com.sun.net.httpserver.HttpServer;
 import ru.yandex.practicum.kanban.http.handler.*;
 import ru.yandex.practicum.kanban.manager.Managers;
 import ru.yandex.practicum.kanban.manager.TaskManager;
-import ru.yandex.practicum.kanban.task.StatusTask;
 import ru.yandex.practicum.kanban.util.TaskUtils;
 
 import java.io.IOException;
@@ -52,28 +51,9 @@ public class HttpTaskServer {
     public static Gson getGson() {
         return new GsonBuilder()
                 .setPrettyPrinting()
-                .registerTypeAdapter(StatusTask.class, new StatusTaskAdapter())
                 .registerTypeAdapter(Duration.class, new DurationAdapter())
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
                 .create();
-    }
-
-    private static class StatusTaskAdapter extends TypeAdapter<StatusTask> {
-
-        @Override
-        public void write(final JsonWriter jsonWriter, final StatusTask statusTask) throws IOException {
-            jsonWriter.value(statusTask.name());
-        }
-
-        @Override
-        public StatusTask read(final JsonReader jsonReader) throws IOException {
-            String statusTask = jsonReader.nextString();
-            if (TaskUtils.stringInArrEnum(StatusTask.values(), statusTask)) {
-                return StatusTask.valueOf(statusTask);
-            } else {
-                throw new HttpServerGsonException("Json field parsing error: status=" + statusTask);
-            }
-        }
     }
 
     private static class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
