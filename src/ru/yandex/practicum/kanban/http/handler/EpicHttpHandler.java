@@ -2,7 +2,6 @@ package ru.yandex.practicum.kanban.http.handler;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import ru.yandex.practicum.kanban.manager.TaskManager;
 import ru.yandex.practicum.kanban.task.EpicTask;
 import ru.yandex.practicum.kanban.task.SubTask;
@@ -12,13 +11,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-public class EpicHttpHandler extends BaseHttpHandler implements HttpHandler {
-    private final TaskManager manager;
-    private final Gson gson;
+public class EpicHttpHandler extends BaseHttpHandler {
 
     public EpicHttpHandler(TaskManager manager, Gson gson) {
-        this.manager = manager;
-        this.gson = gson;
+        super(manager, gson);
     }
 
     @Override
@@ -33,13 +29,13 @@ public class EpicHttpHandler extends BaseHttpHandler implements HttpHandler {
         runRoute(h, route);
     }
 
-    public HandlerExchange getEpics(RouteExchange routeExchange) {
+    private HandlerExchange getEpics(RouteExchange routeExchange) {
         List<EpicTask> epics = manager.getEpicGroup();
         String text = gson.toJson(epics);
         return sendSuccess(text);
     }
 
-    public HandlerExchange getEpicById(RouteExchange routeExchange) {
+    private HandlerExchange getEpicById(RouteExchange routeExchange) {
         String textId = routeExchange.getKeys().get("id");
         if (textId == null || !TaskUtils.isNumber(textId)) {
             return sendNotFound();
@@ -54,7 +50,7 @@ public class EpicHttpHandler extends BaseHttpHandler implements HttpHandler {
         }
     }
 
-    public HandlerExchange getEpicSubtasks(RouteExchange routeExchange) {
+    private HandlerExchange getEpicSubtasks(RouteExchange routeExchange) {
         String textId = routeExchange.getKeys().get("id");
         if (textId == null || !TaskUtils.isNumber(textId)) {
             return sendNotFound();
@@ -65,7 +61,7 @@ public class EpicHttpHandler extends BaseHttpHandler implements HttpHandler {
         return sendSuccess(text);
     }
 
-    public HandlerExchange removeEpic(RouteExchange routeExchange) {
+    private HandlerExchange removeEpic(RouteExchange routeExchange) {
         String textId = routeExchange.getKeys().get("id");
         if (textId == null || !TaskUtils.isNumber(textId)) {
             return sendNotFound();
@@ -74,7 +70,7 @@ public class EpicHttpHandler extends BaseHttpHandler implements HttpHandler {
         return (manager.removeEpic(id)) ? sendSuccess("Deleted") : sendNotFound();
     }
 
-    public HandlerExchange addEpic(RouteExchange routeExchange) {
+    private HandlerExchange addEpic(RouteExchange routeExchange) {
         String text = routeExchange.getRequestBody();
         EpicTask epic = gson.fromJson(text, EpicTask.class);
         if (epic == null) {

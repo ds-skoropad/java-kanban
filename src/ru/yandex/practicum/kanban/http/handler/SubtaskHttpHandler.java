@@ -2,7 +2,6 @@ package ru.yandex.practicum.kanban.http.handler;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import ru.yandex.practicum.kanban.manager.ManagerOverlayTaskException;
 import ru.yandex.practicum.kanban.manager.TaskManager;
 import ru.yandex.practicum.kanban.task.SubTask;
@@ -12,13 +11,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-public class SubtaskHttpHandler extends BaseHttpHandler implements HttpHandler {
-    private final TaskManager manager;
-    private final Gson gson;
+public class SubtaskHttpHandler extends BaseHttpHandler {
 
     public SubtaskHttpHandler(TaskManager manager, Gson gson) {
-        this.manager = manager;
-        this.gson = gson;
+        super(manager, gson);
     }
 
     @Override
@@ -32,13 +28,13 @@ public class SubtaskHttpHandler extends BaseHttpHandler implements HttpHandler {
         runRoute(h, route);
     }
 
-    public HandlerExchange getSubtasks(RouteExchange routeExchange) {
+    private HandlerExchange getSubtasks(RouteExchange routeExchange) {
         List<SubTask> sub = manager.getSubGroup();
         String answer = gson.toJson(sub);
         return sendSuccess(answer);
     }
 
-    public HandlerExchange getSubtaskById(RouteExchange routeExchange) {
+    private HandlerExchange getSubtaskById(RouteExchange routeExchange) {
         String textId = routeExchange.getKeys().get("id");
         if (textId == null || !TaskUtils.isNumber(textId)) {
             return sendNotFound();
@@ -53,7 +49,7 @@ public class SubtaskHttpHandler extends BaseHttpHandler implements HttpHandler {
         }
     }
 
-    public HandlerExchange removeSubtask(RouteExchange routeExchange) {
+    private HandlerExchange removeSubtask(RouteExchange routeExchange) {
         String textId = routeExchange.getKeys().get("id");
         if (textId == null || !TaskUtils.isNumber(textId)) {
             return sendNotFound();
@@ -62,7 +58,7 @@ public class SubtaskHttpHandler extends BaseHttpHandler implements HttpHandler {
         return (manager.removeSub(id)) ? sendSuccess("Deleted") : sendNotFound();
     }
 
-    public HandlerExchange addSubtask(RouteExchange routeExchange) {
+    private HandlerExchange addSubtask(RouteExchange routeExchange) {
         String text = routeExchange.getRequestBody();
         SubTask sub = gson.fromJson(text, SubTask.class);
         if (sub == null) {

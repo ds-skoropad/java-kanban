@@ -2,7 +2,6 @@ package ru.yandex.practicum.kanban.http.handler;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import ru.yandex.practicum.kanban.manager.ManagerOverlayTaskException;
 import ru.yandex.practicum.kanban.manager.TaskManager;
 import ru.yandex.practicum.kanban.task.Task;
@@ -12,13 +11,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-public class TaskHttpHandler extends BaseHttpHandler implements HttpHandler {
-    private final TaskManager manager;
-    private final Gson gson;
+public class TaskHttpHandler extends BaseHttpHandler {
 
     public TaskHttpHandler(TaskManager manager, Gson gson) {
-        this.manager = manager;
-        this.gson = gson;
+        super(manager, gson);
     }
 
     @Override
@@ -32,13 +28,13 @@ public class TaskHttpHandler extends BaseHttpHandler implements HttpHandler {
         runRoute(h, route);
     }
 
-    public HandlerExchange getTasks(RouteExchange routeExchange) {
+    private HandlerExchange getTasks(RouteExchange routeExchange) {
         List<Task> tasks = manager.getTaskGroup();
         String answer = gson.toJson(tasks);
         return sendSuccess(answer);
     }
 
-    public HandlerExchange getTaskById(RouteExchange routeExchange) {
+    private HandlerExchange getTaskById(RouteExchange routeExchange) {
         String textId = routeExchange.getKeys().get("id");
         if (textId == null || !TaskUtils.isNumber(textId)) {
             return sendNotFound();
@@ -53,7 +49,7 @@ public class TaskHttpHandler extends BaseHttpHandler implements HttpHandler {
         }
     }
 
-    public HandlerExchange removeTask(RouteExchange routeExchange) {
+    private HandlerExchange removeTask(RouteExchange routeExchange) {
         String textId = routeExchange.getKeys().get("id");
         if (textId == null || !TaskUtils.isNumber(textId)) {
             return sendNotFound();
@@ -62,7 +58,7 @@ public class TaskHttpHandler extends BaseHttpHandler implements HttpHandler {
         return (manager.removeTask(id)) ? sendSuccess("Deleted") : sendNotFound();
     }
 
-    public HandlerExchange addTask(RouteExchange routeExchange) {
+    private HandlerExchange addTask(RouteExchange routeExchange) {
         String text = routeExchange.getRequestBody();
         Task task = gson.fromJson(text, Task.class);
         if (task == null) {

@@ -2,20 +2,16 @@ package ru.yandex.practicum.kanban.http.handler;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import ru.yandex.practicum.kanban.manager.TaskManager;
 import ru.yandex.practicum.kanban.task.Task;
 
 import java.io.IOException;
 import java.util.List;
 
-public class PrioritizedHttpHandler  extends BaseHttpHandler implements HttpHandler {
-    private final TaskManager manager;
-    private final Gson gson;
+public class PrioritizedHttpHandler extends BaseHttpHandler {
 
     public PrioritizedHttpHandler(TaskManager manager, Gson gson) {
-        this.manager = manager;
-        this.gson = gson;
+        super(manager, gson);
     }
 
     @Override
@@ -26,7 +22,7 @@ public class PrioritizedHttpHandler  extends BaseHttpHandler implements HttpHand
         runRoute(h, route);
     }
 
-    public HandlerExchange getPrioritizedTasks(RouteExchange routeExchange) {
+    private HandlerExchange getPrioritizedTasks(RouteExchange routeExchange) {
         List<Task> tasks = manager.getPrioritizedTasks();
         String text = gson.toJson(tasks);
         return sendSuccess(text);
