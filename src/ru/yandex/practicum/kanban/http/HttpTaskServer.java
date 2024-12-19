@@ -2,22 +2,17 @@ package ru.yandex.practicum.kanban.http;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import com.sun.net.httpserver.HttpServer;
+import ru.yandex.practicum.kanban.http.adapter.DurationAdapter;
+import ru.yandex.practicum.kanban.http.adapter.LocalDateTimeAdapter;
 import ru.yandex.practicum.kanban.http.handler.*;
 import ru.yandex.practicum.kanban.manager.Managers;
 import ru.yandex.practicum.kanban.manager.TaskManager;
-import ru.yandex.practicum.kanban.util.TaskUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
-
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 public class HttpTaskServer {
     private static final int PORT = 8080;
@@ -54,47 +49,6 @@ public class HttpTaskServer {
                 .registerTypeAdapter(Duration.class, new DurationAdapter())
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
                 .create();
-    }
-
-    private static class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
-
-        @Override
-        public void write(final JsonWriter jsonWriter, final LocalDateTime localDateTime) throws IOException {
-            if (localDateTime == null) {
-                jsonWriter.value("null");
-            } else {
-                jsonWriter.value(localDateTime.format(ISO_LOCAL_DATE_TIME));
-            }
-        }
-
-        @Override
-        public LocalDateTime read(final JsonReader jsonReader) throws IOException {
-            try {
-                String localDateTime = jsonReader.nextString();
-                return (localDateTime.equals("null") || localDateTime.isEmpty())
-                        ? null : LocalDateTime.parse(localDateTime, ISO_LOCAL_DATE_TIME);
-            } catch (DateTimeParseException e) {
-                throw new HttpServerGsonException(e.getMessage());
-            }
-        }
-    }
-
-    private static class DurationAdapter extends TypeAdapter<Duration> {
-
-        @Override
-        public void write(final JsonWriter jsonWriter, final Duration duration) throws IOException {
-            jsonWriter.value(duration.getSeconds());
-        }
-
-        @Override
-        public Duration read(final JsonReader jsonReader) throws IOException {
-            String duration = jsonReader.nextString();
-            if (TaskUtils.isNumber(duration)) {
-                return Duration.ofSeconds(Long.parseLong(duration));
-            } else {
-                throw new HttpServerGsonException("Json field parsing error: duration=" + duration);
-            }
-        }
     }
 
     public static void main(String[] args) throws IOException {
