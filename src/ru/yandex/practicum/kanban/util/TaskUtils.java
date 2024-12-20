@@ -119,7 +119,7 @@ public final class TaskUtils {
     }
 
     // Метод проверки содержания строки в массиве значений enum
-    private static <E extends Enum<E>> boolean stringInArrEnum(E[] e, String s) {
+    public static <E extends Enum<E>> boolean stringInArrEnum(E[] e, String s) {
         if (e == null || s.isEmpty()) return false;
 
         boolean result = false;
@@ -133,7 +133,7 @@ public final class TaskUtils {
     }
 
     // Метод проверки строки на состав только из цифр
-    private static boolean isNumber(String value) {
+    public static boolean isNumber(String value) {
         return value.matches("\\d+");
     }
 }

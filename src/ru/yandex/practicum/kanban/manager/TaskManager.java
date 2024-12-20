@@ -25,6 +25,8 @@ public interface TaskManager {
 
     List<Task> getPrioritizedTasks();
 
+    List<Task> getHistory();
+
     int addTask(Task task);
 
     boolean updateTask(Task task);
