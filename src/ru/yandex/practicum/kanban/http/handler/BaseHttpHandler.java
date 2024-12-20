@@ -22,6 +22,7 @@ public abstract class BaseHttpHandler implements HttpHandler {
         DELETE,
         UNKNOWN
     }
+
     protected final TaskManager manager;
     protected final Gson gson;
 
